@@ -38,5 +38,3 @@ class CookieList {
 extension CookieExtension on Cookie {
   String get toCookie => '$name=$value';
 }
-
-String _toCookies(Iterable<String> cookies) => cookies.join('; ');

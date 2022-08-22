@@ -11,14 +11,6 @@ void main() async {
     final xdnmb = XdnmbApi();
     CookieList? list;
 
-    test('getPhpSessionId() gets the PHP session ID', () async {
-      await xdnmb.getPhpSessionId();
-
-      expect(xdnmb.xdnmbPhpSessionId, isNotNull);
-      expect(xdnmb.xdnmbPhpSessionId!.name, equals('PHPSESSID'));
-      expect(xdnmb.xdnmbPhpSessionId!.value, isNotEmpty);
-    });
-
     test('getVerifyImage() gets the verifying image', () async {
       final image = await xdnmb.getVerifyImage();
       final file = File(verifyImageFile);

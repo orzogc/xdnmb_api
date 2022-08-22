@@ -56,7 +56,7 @@ class Cdn {
 
     return <Cdn>[
       for (final Map<String, dynamic> map in decoded)
-        Cdn._internal(map['url'] ?? Urls.originCdnUrl, map['rate'] ?? 0.0)
+        Cdn._internal(map['url'] ?? XdnmbUrls.originCdnUrl, map['rate'] ?? 0.0)
     ];
   }
 }
@@ -261,10 +261,10 @@ extension BasePostExtension on PostBase {
   bool hasImage() => image.isNotEmpty;
 
   String? thumbImageUrl() =>
-      hasImage() ? '${Urls().cdnUrl}thumb/$image$imageExtension' : null;
+      hasImage() ? '${XdnmbUrls().cdnUrl}thumb/$image$imageExtension' : null;
 
   String? imageUrl() =>
-      hasImage() ? '${Urls().cdnUrl}image/$image$imageExtension' : null;
+      hasImage() ? '${XdnmbUrls().cdnUrl}image/$image$imageExtension' : null;
 }
 
 /// X岛匿名版的串
@@ -690,48 +690,51 @@ class XdnmbApi {
 
   XdnmbCookie? xdnmbCookie;
 
-  Cookie? xdnmbPhpSessionId;
+  //Cookie? xdnmbPhpSessionId;
 
   Cookie? xdnmbUserCookie;
 
-  String? get _phpSessionId => xdnmbPhpSessionId?.toCookie;
+  //bool get hasPhpSessionId => xdnmbPhpSessionId != null;
+
+  bool get isLogin => xdnmbUserCookie != null;
+
+  bool get hasPhpSessionId => _client.xdnmbPhpSessionId != null;
+
+  //String? get _phpSessionId => xdnmbPhpSessionId?.toCookie;
 
   String? get _userCookie => xdnmbUserCookie?.toCookie;
 
-  /* String? get _allUserCookies =>
-      xdnmbPhpSessionId != null && xdnmbUserCookie != null
-          ? _toCookies([xdnmbPhpSessionId!, xdnmbUserCookie!])
-          : null; */
+  String? get _phpSessionId => _client.xdnmbPhpSessionId;
 
   XdnmbApi({String? userHash, Duration timeout = const Duration(seconds: 15)})
       : _client = Client(timeout: timeout),
         xdnmbCookie = userHash == null ? null : XdnmbCookie(userHash);
 
-  Future<void> updateUrls() => Urls.update();
+  Future<void> updateUrls() => XdnmbUrls.update();
 
   Future<Notice> getNotice() async {
-    final response = await _client.xGet(Urls.notice);
+    final response = await _client.xGet(XdnmbUrls.notice);
 
     return Notice._fromJson(response.body);
   }
 
   Future<List<Cdn>> getCdnList({String? cookie}) async {
     final response =
-        await _client.xGet(Urls().cdnList, cookie ?? xdnmbCookie?.cookie);
+        await _client.xGet(XdnmbUrls().cdnList, cookie ?? xdnmbCookie?.cookie);
 
     return Cdn._fromJson(response.body);
   }
 
   Future<ForumList> getForumList({String? cookie}) async {
-    final response =
-        await _client.xGet(Urls().forumList, cookie ?? xdnmbCookie?.cookie);
+    final response = await _client.xGet(
+        XdnmbUrls().forumList, cookie ?? xdnmbCookie?.cookie);
 
     return ForumList._fromJson(response.body);
   }
 
   Future<List<Timeline>> getTimelineList({String? cookie}) async {
-    final response =
-        await _client.xGet(Urls().timelineList, cookie ?? xdnmbCookie?.cookie);
+    final response = await _client.xGet(
+        XdnmbUrls().timelineList, cookie ?? xdnmbCookie?.cookie);
 
     return Timeline._fromJson(response.body);
   }
@@ -749,7 +752,7 @@ class XdnmbApi {
     }
 
     final response = await _client.xGet(
-        Urls().forum(forumId, page: page), cookie ?? xdnmbCookie?.cookie);
+        XdnmbUrls().forum(forumId, page: page), cookie ?? xdnmbCookie?.cookie);
 
     return ForumThread._fromJson(response.body);
   }
@@ -764,7 +767,8 @@ class XdnmbApi {
     }
 
     final response = await _client.xGet(
-        Urls().timeline(timelineId, page: page), cookie ?? xdnmbCookie?.cookie);
+        XdnmbUrls().timeline(timelineId, page: page),
+        cookie ?? xdnmbCookie?.cookie);
 
     return ForumThread._fromJson(response.body);
   }
@@ -782,7 +786,8 @@ class XdnmbApi {
     }
 
     final response = await _client.xGet(
-        Urls().thread(mainPostId, page: page), cookie ?? xdnmbCookie?.cookie);
+        XdnmbUrls().thread(mainPostId, page: page),
+        cookie ?? xdnmbCookie?.cookie);
 
     return Thread._fromJson(response.body);
   }
@@ -798,7 +803,7 @@ class XdnmbApi {
     }
 
     final response = await _client.xGet(
-        Urls().onlyPoThread(mainPostId, page: page),
+        XdnmbUrls().onlyPoThread(mainPostId, page: page),
         cookie ?? xdnmbCookie?.cookie);
 
     return Thread._fromJson(response.body);
@@ -810,7 +815,7 @@ class XdnmbApi {
     }
 
     final response = await _client.xGet(
-        Urls().reference(postId), cookie ?? xdnmbCookie?.cookie);
+        XdnmbUrls().reference(postId), cookie ?? xdnmbCookie?.cookie);
 
     return Reference._fromJson(response.body);
   }
@@ -823,7 +828,7 @@ class XdnmbApi {
     }
 
     final response = await _client.xGet(
-        Urls().feed(uuid, page: page), cookie ?? xdnmbCookie?.cookie);
+        XdnmbUrls().feed(uuid, page: page), cookie ?? xdnmbCookie?.cookie);
 
     return FeedPost._fromJson(response.body);
   }
@@ -834,7 +839,7 @@ class XdnmbApi {
     }
 
     final response = await _client.xGet(
-        Urls().addFeed(uuid, mainPostId), cookie ?? xdnmbCookie?.cookie);
+        XdnmbUrls().addFeed(uuid, mainPostId), cookie ?? xdnmbCookie?.cookie);
     final String decoded = json.decode(response.body);
 
     if (!decoded.contains('订阅大成功')) {
@@ -848,7 +853,8 @@ class XdnmbApi {
     }
 
     final response = await _client.xGet(
-        Urls().deleteFeed(uuid, mainPostId), cookie ?? xdnmbCookie?.cookie);
+        XdnmbUrls().deleteFeed(uuid, mainPostId),
+        cookie ?? xdnmbCookie?.cookie);
     final String decoded = json.decode(response.body);
 
     if (!decoded.contains('取消订阅成功')) {
@@ -866,7 +872,8 @@ class XdnmbApi {
       bool? watermark,
       Image? image,
       String? cookie}) async {
-    if (xdnmbCookie == null) {
+    cookie = cookie ?? xdnmbCookie?.cookie;
+    if (cookie == null) {
       throw XdnmbApiException('发串需要饼干');
     }
     if (forumId <= 0) {
@@ -876,7 +883,7 @@ class XdnmbApi {
       throw XdnmbApiException('不发图时串的内容不能为空');
     }
 
-    final multipart = Multipart(Urls().postNewThread)
+    final multipart = Multipart(XdnmbUrls().postNewThread)
       ..add('fid', forumId)
       ..add('content', content);
     if (name != null) {
@@ -897,8 +904,7 @@ class XdnmbApi {
           filename: image.filename, contentType: image.imageType.mineType());
     }
 
-    final response =
-        await _client.xPostMultipart(multipart, cookie ?? xdnmbCookie?.cookie);
+    final response = await _client.xPostMultipart(multipart, cookie);
     _handleHtml(response.body);
   }
 
@@ -931,7 +937,8 @@ class XdnmbApi {
       bool? watermark,
       Image? image,
       String? cookie}) async {
-    if (xdnmbCookie == null) {
+    cookie = cookie ?? xdnmbCookie?.cookie;
+    if (cookie == null) {
       throw XdnmbApiException('回串需要饼干');
     }
     if (mainPostId <= 0) {
@@ -941,7 +948,7 @@ class XdnmbApi {
       throw XdnmbApiException('不发图时串的内容不能为空');
     }
 
-    final multipart = Multipart(Urls().replyThread)
+    final multipart = Multipart(XdnmbUrls().replyThread)
       ..add('resto', mainPostId)
       ..add('content', content);
     if (name != null) {
@@ -962,8 +969,7 @@ class XdnmbApi {
           contentType: image.imageType.mineType(), filename: image.filename);
     }
 
-    final response =
-        await _client.xPostMultipart(multipart, cookie ?? xdnmbCookie?.cookie);
+    final response = await _client.xPostMultipart(multipart, cookie);
     _handleHtml(response.body);
   }
 
@@ -990,60 +996,25 @@ class XdnmbApi {
     _client.close();
   }
 
-  Future<void> getPhpSessionId() async {
-    final response = await _client.xGet(Urls().userLogin);
-    _handleHtml(response.body);
+  Future<List<int>> getVerifyImage() async {
+    final response = await _client.xGet(XdnmbUrls().verifyImage);
 
-    final setCookie = response.headers[HttpHeaders.setCookieHeader];
-    if (setCookie == null) {
-      throw XdnmbApiException('获取PHPSESSID失败');
-    }
-    final cookie = Cookie.fromSetCookieValue(setCookie);
-    if (cookie.name != 'PHPSESSID') {
-      throw XdnmbApiException('获取PHPSESSID失败');
-    }
-    xdnmbPhpSessionId = cookie;
-  }
-
-  Future<List<int>> getVerifyImage({String? phpSessionId}) async {
-    phpSessionId = phpSessionId ?? _phpSessionId;
-    if (phpSessionId == null) {
-      throw XdnmbApiException('获取验证图片需要PHPSESSID');
-    }
-
-    final response = await _client.xGet(Urls().verifyImage, phpSessionId);
     return response.bodyBytes;
   }
 
   Future<void> userLogin(
       {required String email,
       required String password,
-      required String verify,
-      String? phpSessionId}) async {
-    /* var response = await _client.xGet(Urls().userLogin);
-    final html = parse(response.body);
-    final hash = html.querySelector('meta[name="__hash__"]');
-    if (hash == null) {
-      throw XdnmbApiException('请求登陆页面失败');
-    }
-    final hashValue = hash.attributes['content'];
-    if (hashValue == null) {
-      throw XdnmbApiException('请求登陆页面失败');
-    } */
-
-    phpSessionId = phpSessionId ?? _phpSessionId;
-    if (phpSessionId == null) {
+      required String verify}) async {
+    if (!hasPhpSessionId) {
       throw XdnmbApiException('用户登陆需要PHPSESSID');
     }
 
-    final response = await _client.xPostForm(
-        Urls().userLogin,
-        {
-          'email': email,
-          'password': password,
-          'verify': verify,
-        },
-        phpSessionId);
+    final response = await _client.xPostForm(XdnmbUrls().userLogin, {
+      'email': email,
+      'password': password,
+      'verify': verify,
+    });
     _handleHtml(response.body);
 
     final setCookie = response.headers[HttpHeaders.setCookieHeader];
@@ -1062,7 +1033,8 @@ class XdnmbApi {
     if (userCookie == null) {
       throw XdnmbApiException('获取饼干需要用户Cookie');
     }
-    final response = await _client.xGet(Urls().getCookie(cookieId), userCookie);
+    final response =
+        await _client.xGet(XdnmbUrls().getCookie(cookieId), userCookie);
     final body = response.body;
     _handleHtml(body);
 
@@ -1089,7 +1061,7 @@ class XdnmbApi {
     if (userCookie == null) {
       throw XdnmbApiException('获取饼干列表需要用户Cookie');
     }
-    final response = await _client.xGet(Urls().cookiesList, userCookie);
+    final response = await _client.xGet(XdnmbUrls().cookiesList, userCookie);
     final body = response.body;
     _handleHtml(body);
 
@@ -1139,33 +1111,28 @@ class XdnmbApi {
   }
 
   Future<void> getNewCookie(
-      {required String verify,
-      String? phpSessionId,
-      String? userCookie}) async {
-    phpSessionId = phpSessionId ?? _phpSessionId;
+      {required String verify, String? userCookie}) async {
     userCookie = userCookie ?? _userCookie;
-    if (phpSessionId == null || userCookie == null) {
+    if (!hasPhpSessionId || userCookie == null) {
       throw XdnmbApiException('获取新饼干需要PHPSESSID和用户Cookie');
     }
 
-    final response = await _client.xPostForm(Urls().getNewCookie,
-        {'verify': verify}, _toCookies([phpSessionId, userCookie]));
+    final response = await _client.xPostForm(
+        XdnmbUrls().getNewCookie, {'verify': verify}, userCookie);
     _handleHtml(response.body);
   }
 
   Future<void> deleteCookie(
       {required int cookieId,
       required String verify,
-      String? phpSessionId,
       String? userCookie}) async {
-    phpSessionId = phpSessionId ?? _phpSessionId;
     userCookie = userCookie ?? _userCookie;
-    if (phpSessionId == null || userCookie == null) {
+    if (!hasPhpSessionId || userCookie == null) {
       throw XdnmbApiException('删除饼干需要PHPSESSID和用户Cookie');
     }
 
-    final response = await _client.xPostForm(Urls().deleteCookie(cookieId),
-        {'verify': verify}, _toCookies([phpSessionId, userCookie]));
+    final response = await _client.xPostForm(
+        XdnmbUrls().deleteCookie(cookieId), {'verify': verify}, userCookie);
     _handleHtml(response.body);
   }
 }

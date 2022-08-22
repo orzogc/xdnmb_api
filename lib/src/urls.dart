@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-class Urls {
+class XdnmbUrls {
   static const String _xdnmbOriginUrl = 'https://www.nmbxd.com/';
 
   static const String _xdnmbCurrentUrl = 'https://www.nmbxd1.com/';
@@ -10,7 +10,7 @@ class Urls {
 
   static const String notice = 'https://nmb.ovear.info/nmb-notice.json';
 
-  static Urls _urls = Urls._internal(_xdnmbCurrentUrl, originCdnUrl);
+  static XdnmbUrls _urls = XdnmbUrls._internal(_xdnmbCurrentUrl, originCdnUrl);
 
   final String xdnmbBaseUrl;
 
@@ -40,9 +40,9 @@ class Urls {
   String get resetPassword =>
       '${xdnmbBaseUrl}Member/User/Index/sendForgotPassword.html';
 
-  const Urls._internal(this.xdnmbBaseUrl, this.cdnUrl);
+  const XdnmbUrls._internal(this.xdnmbBaseUrl, this.cdnUrl);
 
-  factory Urls() => _urls;
+  factory XdnmbUrls() => _urls;
 
   /// [page]从1开始算起
   String forum(int forumId, {int page = 1}) =>
@@ -74,7 +74,7 @@ class Urls {
   String deleteCookie(int cookieId) =>
       '${xdnmbBaseUrl}Member/User/Cookie/delete/id/$cookieId.html';
 
-  static Future<Urls> update() async {
+  static Future<XdnmbUrls> update() async {
     final client = HttpClient()..connectionTimeout = Duration(seconds: 10);
 
     try {
@@ -98,7 +98,7 @@ class Urls {
         cdnUrl = decoded[0]['url'] ?? originCdnUrl;
       }
 
-      _urls = Urls._internal(baseUrl, cdnUrl);
+      _urls = XdnmbUrls._internal(baseUrl, cdnUrl);
 
       return _urls;
     } finally {
