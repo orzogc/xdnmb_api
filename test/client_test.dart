@@ -20,7 +20,7 @@ void main() async {
       expect(body['args']['foo'], equals('bar'));
       expect(body['args']['baz'], equals('qux'));
       expect(body['headers']['Accept-Encoding'], equals('gzip'));
-      expect(body['headers']['Cookie'], equals(cookie.toString()));
+      expect(body['headers']['Cookie'], equals(cookie.cookie));
       expect(body['headers']['User-Agent'], equals('xdnmb'));
       expect(body['url'], equals(url));
     });
@@ -39,7 +39,7 @@ void main() async {
       expect(body['headers']['Accept-Encoding'], equals('gzip'));
       expect(body['headers']['Content-Type'],
           contains('application/x-www-form-urlencoded'));
-      expect(body['headers']['Cookie'], equals(cookie.toString()));
+      expect(body['headers']['Cookie'], equals(cookie.cookie));
       expect(body['headers']['User-Agent'], equals('xdnmb'));
       expect(body['url'], equals(url));
     });
@@ -62,7 +62,7 @@ void main() async {
       expect(body['headers']['Accept-Encoding'], equals('gzip'));
       expect(body['headers']['Content-Type'],
           contains('multipart/form-data; boundary='));
-      expect(body['headers']['Cookie'], equals(cookie.toString()));
+      expect(body['headers']['Cookie'], equals(cookie.cookie));
       expect(body['headers']['User-Agent'], equals('xdnmb'));
       expect(body['url'], equals(url));
     });

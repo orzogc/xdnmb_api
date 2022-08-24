@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:html/parser.dart' show parse;
 import 'package:mime/mime.dart';
@@ -448,7 +449,18 @@ class Thread {
   }
 }
 
-class Reference implements PostBase {
+abstract class ReferenceBase implements PostBase {
+  @override
+  int? get forumId => null;
+
+  @override
+  int? get replyCount => null;
+
+  @override
+  bool? get isHidden => null;
+}
+
+class Reference extends ReferenceBase {
   @override
   late final int id;
 
@@ -482,15 +494,6 @@ class Reference implements PostBase {
   @override
   late final bool isAdmin;
 
-  @override
-  int? get forumId => null;
-
-  @override
-  int? get replyCount => null;
-
-  @override
-  bool? get isHidden => null;
-
   Reference._fromJson(String data) {
     final decoded = json.decode(data);
     _handleJsonError(decoded);
@@ -506,6 +509,123 @@ class Reference implements PostBase {
     isSage = (decoded['sage'] ?? 0) == 0 ? false : true;
     status = decoded['status'] ?? 'n';
     isAdmin = (decoded['admin'] ?? 0) == 0 ? false : true;
+  }
+}
+
+class HtmlReference extends ReferenceBase {
+  @override
+  late final int id;
+
+  @override
+  late final String image;
+
+  @override
+  late final String imageExtension;
+
+  @override
+  late final DateTime postTime;
+
+  @override
+  late final String userHash;
+
+  @override
+  late final String name;
+
+  @override
+  late final String title;
+
+  @override
+  late final String content;
+
+  @override
+  late final bool isAdmin;
+
+  late final int? mainPostId;
+
+  @override
+  bool? get isSage => null;
+
+  HtmlReference._fromHtml(String data) {
+    final document = parse(data);
+
+    var element = document.querySelector('a.h-threads-info-id');
+    if (element == null) {
+      throw XdnmbApiException('HtmlReference里没找到id');
+    }
+    final str = _RegExp._parseNum.stringMatch(element.innerHtml);
+    if (str == null) {
+      throw XdnmbApiException('HtmlReference里没找到id');
+    }
+    id = int.parse(str);
+    final href = element.attributes['href'];
+    if (href != null) {
+      final str = _RegExp._parseMainPostId.firstMatch(href)?[1];
+      if (str != null) {
+        mainPostId = int.parse(str);
+      } else {
+        mainPostId = null;
+      }
+    } else {
+      mainPostId = null;
+    }
+
+    element = document.querySelector('img.h-threads-img');
+    if (element == null) {
+      image = '';
+      imageExtension = '';
+    } else {
+      final img = element.attributes['src'];
+      if (img == null) {
+        throw XdnmbApiException('HtmlReference里没找到image');
+      }
+      final match = _RegExp._parseThumbImage.firstMatch(img);
+      if (match == null) {
+        throw XdnmbApiException('HtmlReference里没找到image');
+      }
+      image = match[1]!;
+      imageExtension = match[2] ?? '';
+    }
+
+    element = document.querySelector('span.h-threads-info-createdat');
+    if (element == null) {
+      throw XdnmbApiException('HtmlReference里没找到postTime');
+    }
+    postTime = _parseTimeString(element.innerHtml);
+
+    element = document.querySelector('span.h-threads-info-uid');
+    if (element == null) {
+      throw XdnmbApiException('HtmlReference里没找到userHash');
+    }
+    final child = element.querySelector('font');
+    if (child != null) {
+      isAdmin = true;
+      userHash = child.innerHtml;
+    } else {
+      isAdmin = false;
+      final match = _RegExp._parseUserHash.firstMatch(element.innerHtml);
+      if (match == null) {
+        throw XdnmbApiException('HtmlReference里没找到userHash');
+      }
+      userHash = match[1]!;
+    }
+
+    element = document.querySelector('span.h-threads-info-email');
+    if (element == null) {
+      throw XdnmbApiException('HtmlReference里没找到name');
+    }
+    name = element.innerHtml;
+
+    element = document.querySelector('span.h-threads-info-title');
+    if (element == null) {
+      throw XdnmbApiException('HtmlReference里没找到title');
+    }
+    title = element.innerHtml;
+
+    element = document.querySelector('div.h-threads-content');
+    if (element == null) {
+      throw XdnmbApiException('HtmlReference里没找到content');
+    }
+    content = element.innerHtml;
   }
 }
 
@@ -690,21 +810,13 @@ class XdnmbApi {
 
   XdnmbCookie? xdnmbCookie;
 
-  //Cookie? xdnmbPhpSessionId;
-
   Cookie? xdnmbUserCookie;
-
-  //bool get hasPhpSessionId => xdnmbPhpSessionId != null;
 
   bool get isLogin => xdnmbUserCookie != null;
 
   bool get hasPhpSessionId => _client.xdnmbPhpSessionId != null;
 
-  //String? get _phpSessionId => xdnmbPhpSessionId?.toCookie;
-
   String? get _userCookie => xdnmbUserCookie?.toCookie;
-
-  String? get _phpSessionId => _client.xdnmbPhpSessionId;
 
   XdnmbApi({String? userHash, Duration timeout = const Duration(seconds: 15)})
       : _client = Client(timeout: timeout),
@@ -818,6 +930,19 @@ class XdnmbApi {
         XdnmbUrls().reference(postId), cookie ?? xdnmbCookie?.cookie);
 
     return Reference._fromJson(response.body);
+  }
+
+  Future<HtmlReference> getHtmlReference(int postId, {String? cookie}) async {
+    if (postId <= 0) {
+      throw XdnmbApiException('串的ID要大于0');
+    }
+
+    final response = await _client.xGet(
+        XdnmbUrls().htmlReference(postId), cookie ?? xdnmbCookie?.cookie);
+    final body = response.body;
+    _handleHtml(body);
+
+    return HtmlReference._fromHtml(body);
   }
 
   /// 最多10个
@@ -996,11 +1121,8 @@ class XdnmbApi {
     _client.close();
   }
 
-  Future<List<int>> getVerifyImage() async {
-    final response = await _client.xGet(XdnmbUrls().verifyImage);
-
-    return response.bodyBytes;
-  }
+  Future<Uint8List> getVerifyImage() async =>
+      (await _client.xGet(XdnmbUrls().verifyImage)).bodyBytes;
 
   Future<void> userLogin(
       {required String email,
@@ -1066,26 +1188,36 @@ class XdnmbApi {
     _handleHtml(body);
 
     final document = parse(body);
-    var elements = document.getElementsByClassName('am-text-success');
-    if (elements.isEmpty) {
+    var element = document.querySelector('b.am-text-success');
+    late final bool canGetCookie;
+    if (element == null) {
+      element = document.querySelector('b.am-text-danger');
+      if (element == null) {
+        throw XdnmbApiException('获取饼干是否开放领取失败');
+      } else if (element.innerHtml.contains('已关闭')) {
+        canGetCookie = false;
+      } else {
+        throw XdnmbApiException('获取饼干是否开放领取失败');
+      }
+    } else if (element.innerHtml.contains('已开放')) {
+      canGetCookie = true;
+    } else {
       throw XdnmbApiException('获取饼干是否开放领取失败');
     }
-    final canGetCookie = elements[0].innerHtml.contains('已开放');
 
-    elements = document.getElementsByClassName('am-text-primary');
-    if (elements.isEmpty) {
+    element = document.querySelector('b.am-text-primary');
+    if (element == null) {
       throw XdnmbApiException('获取饼干数量失败');
     }
-    final match = RegExp('([0-9])/([0-9])').firstMatch(elements[0].innerHtml);
+    final match = _RegExp._cookieNum.firstMatch(element.innerHtml);
     if (match == null) {
       throw XdnmbApiException('获取饼干数量失败');
     }
     final currentCookiesNum = int.parse(match[1]!);
     final totalCookiesNum = int.parse(match[2]!);
 
-    final idList =
-        document.querySelectorAll('tr td:first-child').map((element) {
-      final next = element.nextElementSibling;
+    final idList = document.querySelectorAll('tr td:first-child').map((e) {
+      final next = e.nextElementSibling;
       if (next == null) {
         throw XdnmbApiException('获取饼干ID失败');
       }
@@ -1146,20 +1278,38 @@ void _handleJsonError(dynamic decoded) {
   }
 }
 
-void _handleHtml(String data) {
+String? _handleHtml(String data) {
   final document = parse(data);
 
-  if (document.getElementsByClassName('success').isNotEmpty) {
-    return;
+  final success = document.querySelector('p.success');
+  if (success != null) {
+    return success.innerHtml;
   }
-  final error = document.getElementsByClassName('error');
-  if (error.isNotEmpty) {
-    throw XdnmbApiException(error[0].innerHtml);
+
+  final error = document.querySelector('p.error');
+  if (error != null) {
+    throw XdnmbApiException(error.innerHtml);
   }
+
+  return null;
 }
 
 DateTime _parseTimeString(String timeString) {
-  final time = timeString.replaceFirst(RegExp(r'\(.*\)'), 'T');
+  final time = timeString.replaceFirst(_RegExp._parseDay, 'T');
 
   return DateTime.parse('$time+0800');
+}
+
+abstract class _RegExp {
+  static final RegExp _parseDay = RegExp(r'\(.*\)');
+
+  static final RegExp _cookieNum = RegExp(r'([0-9])/([0-9])');
+
+  static final RegExp _parseNum = RegExp(r'[0-9]+');
+
+  static final RegExp _parseMainPostId = RegExp(r't/([0-9]+)');
+
+  static final RegExp _parseThumbImage = RegExp(r'thumb/([^\.]+)(\..*)?');
+
+  static final RegExp _parseUserHash = RegExp(r'ID:(.+)');
 }

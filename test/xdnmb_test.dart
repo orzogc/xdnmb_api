@@ -154,6 +154,7 @@ void main() async {
         final reference = await xdnmb.getReference(forumThread.mainPost.id);
 
         testReference(reference);
+        expect(reference.status, equals('n'));
       }
 
       final thread = await xdnmb.getThread(forumThreads[1].mainPost.id);
@@ -161,9 +162,32 @@ void main() async {
         final reference = await xdnmb.getReference(reply.id);
 
         testReference(reference);
+        expect(reference.status, equals('n'));
       }
 
       await expectLater(() async => await xdnmb.getReference(1),
+          throwsA(isA<XdnmbApiException>()));
+    });
+
+    test('getHtmlReference() gets the html reference of a post', () async {
+      final forumThreads = await xdnmb.getForum(4);
+
+      for (final forumThread in forumThreads) {
+        final reference = await xdnmb.getHtmlReference(forumThread.mainPost.id);
+
+        testReference(reference);
+        expect(reference.mainPostId, isNotNull);
+      }
+
+      final thread = await xdnmb.getThread(forumThreads[1].mainPost.id);
+      for (final reply in thread.replies) {
+        final reference = await xdnmb.getHtmlReference(reply.id);
+
+        testReference(reference);
+        expect(reference.mainPostId, isNull);
+      }
+
+      await expectLater(() async => await xdnmb.getHtmlReference(1),
           throwsA(isA<XdnmbApiException>()));
     });
 
@@ -290,7 +314,7 @@ void testForumThreads(List<ForumThread> forumThreads, Matcher forumIdMatcher) {
   }
 }
 
-void testReference(Reference reference) {
+void testReference(ReferenceBase reference) {
   expect(reference.id, isPositive);
   if (reference.image.isEmpty) {
     expect(reference.imageExtension, isEmpty);
@@ -304,7 +328,6 @@ void testReference(Reference reference) {
   expect(reference.name, isNotEmpty);
   expect(reference.title, isNotEmpty);
   expect(reference.content, isNotEmpty);
-  expect(reference.status, equals('n'));
 }
 
 void testNewPost(Post post, String content, String name, String title) {

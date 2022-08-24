@@ -56,6 +56,9 @@ class XdnmbUrls {
 
   String reference(int postId) => '${xdnmbBaseUrl}Api/ref?id=$postId';
 
+  String htmlReference(int postId) =>
+      '${xdnmbBaseUrl}Home/Forum/ref?id=$postId';
+
   String onlyPoThread(int mainPostId, {int page = 1}) =>
       '${xdnmbBaseUrl}Api/po?id=$mainPostId&page=$page';
 
@@ -84,8 +87,8 @@ class XdnmbUrls {
       await response.drain();
 
       final baseUrl = response.isRedirect
-          ? response.headers.value(HttpHeaders.locationHeader) ??
-              _xdnmbOriginUrl
+          ? (response.headers.value(HttpHeaders.locationHeader) ??
+              _xdnmbOriginUrl)
           : _xdnmbOriginUrl;
 
       request = await client.getUrl(Uri.parse('${baseUrl}Api/getCdnPath'));
