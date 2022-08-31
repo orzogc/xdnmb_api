@@ -625,7 +625,7 @@ class HtmlReference extends ReferenceBase {
     if (element == null) {
       throw XdnmbApiException('HtmlReference里没找到content');
     }
-    content = element.innerHtml;
+    content = element.innerHtml.trim();
   }
 }
 
@@ -827,28 +827,28 @@ class XdnmbApi {
   Future<Notice> getNotice() async {
     final response = await _client.xGet(XdnmbUrls.notice);
 
-    return Notice._fromJson(response.body);
+    return Notice._fromJson(response.utf8Body);
   }
 
   Future<List<Cdn>> getCdnList({String? cookie}) async {
     final response =
         await _client.xGet(XdnmbUrls().cdnList, cookie ?? xdnmbCookie?.cookie);
 
-    return Cdn._fromJson(response.body);
+    return Cdn._fromJson(response.utf8Body);
   }
 
   Future<ForumList> getForumList({String? cookie}) async {
     final response = await _client.xGet(
         XdnmbUrls().forumList, cookie ?? xdnmbCookie?.cookie);
 
-    return ForumList._fromJson(response.body);
+    return ForumList._fromJson(response.utf8Body);
   }
 
   Future<List<Timeline>> getTimelineList({String? cookie}) async {
     final response = await _client.xGet(
         XdnmbUrls().timelineList, cookie ?? xdnmbCookie?.cookie);
 
-    return Timeline._fromJson(response.body);
+    return Timeline._fromJson(response.utf8Body);
   }
 
   /// [page]最大为100。
@@ -866,7 +866,7 @@ class XdnmbApi {
     final response = await _client.xGet(
         XdnmbUrls().forum(forumId, page: page), cookie ?? xdnmbCookie?.cookie);
 
-    return ForumThread._fromJson(response.body);
+    return ForumThread._fromJson(response.utf8Body);
   }
 
   /// [page]最大值根据[Timeline.maxPage]。
@@ -882,7 +882,7 @@ class XdnmbApi {
         XdnmbUrls().timeline(timelineId, page: page),
         cookie ?? xdnmbCookie?.cookie);
 
-    return ForumThread._fromJson(response.body);
+    return ForumThread._fromJson(response.utf8Body);
   }
 
   /// 一页最多19个回复。
@@ -901,7 +901,7 @@ class XdnmbApi {
         XdnmbUrls().thread(mainPostId, page: page),
         cookie ?? xdnmbCookie?.cookie);
 
-    return Thread._fromJson(response.body);
+    return Thread._fromJson(response.utf8Body);
   }
 
   /// 一页最多20个回复。
@@ -918,7 +918,7 @@ class XdnmbApi {
         XdnmbUrls().onlyPoThread(mainPostId, page: page),
         cookie ?? xdnmbCookie?.cookie);
 
-    return Thread._fromJson(response.body);
+    return Thread._fromJson(response.utf8Body);
   }
 
   Future<Reference> getReference(int postId, {String? cookie}) async {
@@ -929,7 +929,7 @@ class XdnmbApi {
     final response = await _client.xGet(
         XdnmbUrls().reference(postId), cookie ?? xdnmbCookie?.cookie);
 
-    return Reference._fromJson(response.body);
+    return Reference._fromJson(response.utf8Body);
   }
 
   Future<HtmlReference> getHtmlReference(int postId, {String? cookie}) async {
@@ -939,7 +939,7 @@ class XdnmbApi {
 
     final response = await _client.xGet(
         XdnmbUrls().htmlReference(postId), cookie ?? xdnmbCookie?.cookie);
-    final body = response.body;
+    final body = response.utf8Body;
     _handleHtml(body);
 
     return HtmlReference._fromHtml(body);
@@ -955,7 +955,7 @@ class XdnmbApi {
     final response = await _client.xGet(
         XdnmbUrls().feed(uuid, page: page), cookie ?? xdnmbCookie?.cookie);
 
-    return FeedPost._fromJson(response.body);
+    return FeedPost._fromJson(response.utf8Body);
   }
 
   Future<void> addFeed(String uuid, int mainPostId, {String? cookie}) async {
@@ -965,7 +965,7 @@ class XdnmbApi {
 
     final response = await _client.xGet(
         XdnmbUrls().addFeed(uuid, mainPostId), cookie ?? xdnmbCookie?.cookie);
-    final String decoded = json.decode(response.body);
+    final String decoded = json.decode(response.utf8Body);
 
     if (!decoded.contains('订阅大成功')) {
       throw XdnmbApiException(decoded);
@@ -980,7 +980,7 @@ class XdnmbApi {
     final response = await _client.xGet(
         XdnmbUrls().deleteFeed(uuid, mainPostId),
         cookie ?? xdnmbCookie?.cookie);
-    final String decoded = json.decode(response.body);
+    final String decoded = json.decode(response.utf8Body);
 
     if (!decoded.contains('取消订阅成功')) {
       throw XdnmbApiException(decoded);
@@ -1030,7 +1030,7 @@ class XdnmbApi {
     }
 
     final response = await _client.xPostMultipart(multipart, cookie);
-    _handleHtml(response.body);
+    _handleHtml(response.utf8Body);
   }
 
   Future<void> postNewThreadWithImage(
@@ -1095,7 +1095,7 @@ class XdnmbApi {
     }
 
     final response = await _client.xPostMultipart(multipart, cookie);
-    _handleHtml(response.body);
+    _handleHtml(response.utf8Body);
   }
 
   Future<void> replyThreadWithImage(
@@ -1137,7 +1137,7 @@ class XdnmbApi {
       'password': password,
       'verify': verify,
     });
-    _handleHtml(response.body);
+    _handleHtml(response.utf8Body);
 
     final setCookie = response.headers[HttpHeaders.setCookieHeader];
     if (setCookie == null) {
@@ -1157,7 +1157,7 @@ class XdnmbApi {
     }
     final response =
         await _client.xGet(XdnmbUrls().getCookie(cookieId), userCookie);
-    final body = response.body;
+    final body = response.utf8Body;
     _handleHtml(body);
 
     final document = parse(body);
@@ -1184,7 +1184,7 @@ class XdnmbApi {
       throw XdnmbApiException('获取饼干列表需要用户Cookie');
     }
     final response = await _client.xGet(XdnmbUrls().cookiesList, userCookie);
-    final body = response.body;
+    final body = response.utf8Body;
     _handleHtml(body);
 
     final document = parse(body);
@@ -1251,7 +1251,7 @@ class XdnmbApi {
 
     final response = await _client.xPostForm(
         XdnmbUrls().getNewCookie, {'verify': verify}, userCookie);
-    _handleHtml(response.body);
+    _handleHtml(response.utf8Body);
   }
 
   Future<void> deleteCookie(
@@ -1265,7 +1265,7 @@ class XdnmbApi {
 
     final response = await _client.xPostForm(
         XdnmbUrls().deleteCookie(cookieId), {'verify': verify}, userCookie);
-    _handleHtml(response.body);
+    _handleHtml(response.utf8Body);
   }
 }
 

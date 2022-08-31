@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:http/http.dart';
@@ -7,6 +8,10 @@ import 'package:http_parser/http_parser.dart';
 import 'xdnmb.dart';
 
 String _toCookies(Iterable<String> cookies) => cookies.join('; ');
+
+extension ResponseExtension on Response {
+  String get utf8Body => utf8.decode(bodyBytes);
+}
 
 class HttpStatusException implements Exception {
   final int statusCode;
@@ -119,7 +124,7 @@ class Client extends IOClient {
 
 void _checkStatusCode(Response response) {
   if (response.statusCode != HttpStatus.ok) {
-    final body = response.body;
+    final body = response.utf8Body;
     if (body.isEmpty) {
       throw HttpStatusException(response.statusCode);
     }
