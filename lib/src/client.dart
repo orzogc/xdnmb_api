@@ -30,6 +30,16 @@ class HttpStatusException implements Exception {
 
     return result;
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is HttpStatusException &&
+          statusCode == other.statusCode &&
+          body == other.body);
+
+  @override
+  int get hashCode => Object.hash(statusCode, body);
 }
 
 class Multipart extends MultipartRequest {

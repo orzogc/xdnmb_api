@@ -19,6 +19,14 @@ class XdnmbApiException implements Exception {
   String toString() {
     return 'XdnmbApiException: $message';
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is XdnmbApiException && message == other.message);
+
+  @override
+  int get hashCode => message.hashCode;
 }
 
 class Notice {
@@ -36,6 +44,17 @@ class Notice {
     date = decoded['date'] ?? 0;
     isValid = decoded['enable'] ?? false;
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Notice &&
+          content == other.content &&
+          date == other.date &&
+          isValid == other.isValid);
+
+  @override
+  int get hashCode => Object.hash(content, date, isValid);
 }
 
 class Cdn {
@@ -60,6 +79,14 @@ class Cdn {
         Cdn._internal(map['url'] ?? XdnmbUrls.originCdnUrl, map['rate'] ?? 0.0)
     ];
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Cdn && url == other.url && rate == other.rate);
+
+  @override
+  int get hashCode => Object.hash(url, rate);
 }
 
 abstract class ForumBase {
@@ -72,6 +99,19 @@ abstract class ForumBase {
   String get message;
 
   int get maxPage;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ForumBase &&
+          id == other.id &&
+          name == other.name &&
+          displayName == other.displayName &&
+          message == other.message &&
+          maxPage == other.maxPage);
+
+  @override
+  int get hashCode => Object.hash(id, name, displayName, message, maxPage);
 }
 
 extension ForumBaseExtension on ForumBase {
@@ -117,6 +157,19 @@ class Timeline implements ForumBase {
             maxPage: map['max_page'] ?? 20)
     ];
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Timeline &&
+          id == other.id &&
+          name == other.name &&
+          displayName == other.displayName &&
+          message == other.message &&
+          maxPage == other.maxPage);
+
+  @override
+  int get hashCode => Object.hash(id, name, displayName, message, maxPage);
 }
 
 class ForumGroup {
@@ -135,6 +188,18 @@ class ForumGroup {
         sort = int.tryParse(map['sort'] ?? '1') ?? 1,
         name = map['name'] ?? '未知板块组',
         status = map['status'] ?? 'n';
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ForumGroup &&
+          id == other.id &&
+          sort == other.sort &&
+          name == other.name &&
+          status == other.status);
+
+  @override
+  int get hashCode => Object.hash(id, sort, name, status);
 }
 
 class Forum implements ForumBase {
@@ -188,6 +253,42 @@ class Forum implements ForumBase {
         createTime = map['createdAt'] ?? '',
         updateTime = map['updateAt'] ?? '',
         status = map['status'] ?? 'n';
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Forum &&
+          id == other.id &&
+          forumGroupId == other.forumGroupId &&
+          sort == other.sort &&
+          name == other.name &&
+          displayName == other.displayName &&
+          message == other.message &&
+          interval == other.interval &&
+          threadCount == other.threadCount &&
+          permissionLevel == other.permissionLevel &&
+          forumFuseId == other.forumFuseId &&
+          createTime == other.createTime &&
+          updateTime == other.updateTime &&
+          status == other.status &&
+          maxPage == other.maxPage);
+
+  @override
+  int get hashCode => Object.hash(
+      id,
+      forumGroupId,
+      sort,
+      name,
+      displayName,
+      message,
+      interval,
+      threadCount,
+      permissionLevel,
+      forumFuseId,
+      createTime,
+      updateTime,
+      status,
+      maxPage);
 }
 
 class ForumList {
@@ -228,6 +329,17 @@ class ForumList {
       }
     }
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ForumList &&
+          forumGroupList == other.forumGroupList &&
+          forumList == other.forumList &&
+          timelineList == other.timelineList);
+
+  @override
+  int get hashCode => Object.hash(forumGroupList, forumList, timelineList);
 }
 
 abstract class PostBase {
@@ -256,6 +368,40 @@ abstract class PostBase {
   bool get isAdmin;
 
   bool? get isHidden;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is PostBase &&
+          id == other.id &&
+          forumId == other.forumId &&
+          replyCount == other.replyCount &&
+          image == other.image &&
+          imageExtension == other.imageExtension &&
+          postTime == other.postTime &&
+          userHash == other.userHash &&
+          name == other.name &&
+          title == other.title &&
+          content == other.content &&
+          isSage == other.isSage &&
+          isAdmin == other.isAdmin &&
+          isHidden == other.isHidden);
+
+  @override
+  int get hashCode => Object.hash(
+      id,
+      forumId,
+      replyCount,
+      image,
+      imageExtension,
+      postTime,
+      userHash,
+      name,
+      title,
+      content,
+      isSage,
+      isAdmin,
+      isHidden);
 }
 
 extension BasePostExtension on PostBase {
@@ -329,6 +475,40 @@ class Post implements PostBase {
         isSage = (map['sage'] ?? 0) == 0 ? false : true,
         isAdmin = (map['admin'] ?? 0) == 0 ? false : true,
         isHidden = (map['Hide'] ?? 0) == 0 ? false : true;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Post &&
+          id == other.id &&
+          forumId == other.forumId &&
+          replyCount == other.replyCount &&
+          image == other.image &&
+          imageExtension == other.imageExtension &&
+          postTime == other.postTime &&
+          userHash == other.userHash &&
+          name == other.name &&
+          title == other.title &&
+          content == other.content &&
+          isSage == other.isSage &&
+          isAdmin == other.isAdmin &&
+          isHidden == other.isHidden);
+
+  @override
+  int get hashCode => Object.hash(
+      id,
+      forumId,
+      replyCount,
+      image,
+      imageExtension,
+      postTime,
+      userHash,
+      name,
+      title,
+      content,
+      isSage,
+      isAdmin,
+      isHidden);
 }
 
 class ForumThread {
@@ -360,6 +540,17 @@ class ForumThread {
             forumThread['RemainReplies'])
     ];
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ForumThread &&
+          mainPost == other.mainPost &&
+          recentReplies == other.recentReplies &&
+          remainReplies == other.remainReplies);
+
+  @override
+  int get hashCode => Object.hash(mainPost, recentReplies, remainReplies);
 }
 
 class Tip implements PostBase {
@@ -412,6 +603,40 @@ class Tip implements PostBase {
         image = map['img'] ?? '',
         imageExtension = map['ext'] ?? '',
         name = map['name'] ?? '无名氏';
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Tip &&
+          id == other.id &&
+          userHash == other.userHash &&
+          isAdmin == other.isAdmin &&
+          title == other.title &&
+          postTime == other.postTime &&
+          content == other.content &&
+          image == other.image &&
+          imageExtension == other.imageExtension &&
+          name == other.name &&
+          forumId == other.forumId &&
+          replyCount == other.replyCount &&
+          isSage == other.isSage &&
+          isHidden == other.isHidden);
+
+  @override
+  int get hashCode => Object.hash(
+      id,
+      userHash,
+      isAdmin,
+      title,
+      postTime,
+      content,
+      image,
+      imageExtension,
+      name,
+      forumId,
+      replyCount,
+      isSage,
+      isHidden);
 }
 
 class Thread {
@@ -447,6 +672,17 @@ class Thread {
       tip = null;
     }
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Thread &&
+          mainPost == other.mainPost &&
+          replies == other.replies &&
+          tip == other.tip);
+
+  @override
+  int get hashCode => Object.hash(mainPost, replies, tip);
 }
 
 abstract class ReferenceBase implements PostBase {
@@ -458,6 +694,28 @@ abstract class ReferenceBase implements PostBase {
 
   @override
   bool? get isHidden => null;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ReferenceBase &&
+          id == other.id &&
+          image == other.image &&
+          imageExtension == other.imageExtension &&
+          postTime == other.postTime &&
+          userHash == other.userHash &&
+          name == other.name &&
+          title == other.title &&
+          content == other.content &&
+          isSage == other.isSage &&
+          isAdmin == other.isAdmin &&
+          forumId == other.forumId &&
+          replyCount == other.replyCount &&
+          isHidden == other.isHidden);
+
+  @override
+  int get hashCode => Object.hash(id, image, imageExtension, postTime, userHash,
+      name, title, content, isSage, isAdmin, forumId, replyCount, isHidden);
 }
 
 class Reference extends ReferenceBase {
@@ -510,6 +768,42 @@ class Reference extends ReferenceBase {
     status = decoded['status'] ?? 'n';
     isAdmin = (decoded['admin'] ?? 0) == 0 ? false : true;
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Reference &&
+          id == other.id &&
+          image == other.image &&
+          imageExtension == other.imageExtension &&
+          postTime == other.postTime &&
+          userHash == other.userHash &&
+          name == other.name &&
+          title == other.title &&
+          content == other.content &&
+          isSage == other.isSage &&
+          status == other.status &&
+          isAdmin == other.isAdmin &&
+          forumId == other.forumId &&
+          replyCount == other.replyCount &&
+          isHidden == other.isHidden);
+
+  @override
+  int get hashCode => Object.hash(
+      id,
+      image,
+      imageExtension,
+      postTime,
+      userHash,
+      name,
+      title,
+      content,
+      isSage,
+      status,
+      isAdmin,
+      forumId,
+      replyCount,
+      isHidden);
 }
 
 class HtmlReference extends ReferenceBase {
@@ -627,6 +921,42 @@ class HtmlReference extends ReferenceBase {
     }
     content = element.innerHtml.trim();
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is HtmlReference &&
+          id == other.id &&
+          image == other.image &&
+          imageExtension == other.imageExtension &&
+          postTime == other.postTime &&
+          userHash == other.userHash &&
+          name == other.name &&
+          title == other.title &&
+          content == other.content &&
+          isAdmin == other.isAdmin &&
+          mainPostId == other.mainPostId &&
+          isSage == other.isSage &&
+          forumId == other.forumId &&
+          replyCount == other.replyCount &&
+          isHidden == other.isHidden);
+
+  @override
+  int get hashCode => Object.hash(
+      id,
+      image,
+      imageExtension,
+      postTime,
+      userHash,
+      name,
+      title,
+      content,
+      isAdmin,
+      mainPostId,
+      isSage,
+      forumId,
+      replyCount,
+      isHidden);
 }
 
 class FeedPost implements PostBase {
@@ -737,6 +1067,54 @@ class FeedPost implements PostBase {
             po: map['po'])
     ];
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is FeedPost &&
+          id == other.id &&
+          userId == other.userId &&
+          forumId == other.forumId &&
+          replyCount == other.replyCount &&
+          recentReplies == other.recentReplies &&
+          category == other.category &&
+          fileId == other.fileId &&
+          image == other.image &&
+          imageExtension == other.imageExtension &&
+          postTime == other.postTime &&
+          userHash == other.userHash &&
+          name == other.name &&
+          email == other.email &&
+          title == other.title &&
+          content == other.content &&
+          status == other.status &&
+          isAdmin == other.isAdmin &&
+          isHidden == other.isHidden &&
+          po == other.po &&
+          isSage == other.isSage);
+
+  @override
+  int get hashCode => Object.hash(
+      id,
+      userId,
+      forumId,
+      replyCount,
+      recentReplies,
+      category,
+      fileId,
+      image,
+      imageExtension,
+      postTime,
+      userHash,
+      name,
+      email,
+      title,
+      content,
+      status,
+      isAdmin,
+      isHidden,
+      po,
+      isSage);
 }
 
 enum ImageType {
@@ -803,6 +1181,17 @@ class Image {
 
     return Image(filename, data);
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Image &&
+          filename == other.filename &&
+          data == other.data &&
+          imageType == other.imageType);
+
+  @override
+  int get hashCode => Object.hash(filename, data, imageType);
 }
 
 class XdnmbApi {
