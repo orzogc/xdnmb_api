@@ -48,6 +48,9 @@ class XdnmbUrls {
   String forum(int forumId, {int page = 1}) =>
       '${xdnmbBaseUrl}Api/showf?id=$forumId&page=$page';
 
+  String htmlForum(int forumId, {int page = 1}) =>
+      '${xdnmbBaseUrl}Forum/showf?id=$forumId&page=$page';
+
   String timeline(int timelineId, {int page = 1}) =>
       '${xdnmbBaseUrl}Api/timeline?id=$timelineId&page=$page';
 

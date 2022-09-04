@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:html/dom.dart';
 import 'package:html/parser.dart' show parse;
 import 'package:mime/mime.dart';
 
@@ -30,19 +31,23 @@ class XdnmbApiException implements Exception {
 }
 
 class Notice {
-  late final String content;
+  final String content;
 
   /// 公告发布的日期，部分格式未明
-  late final int date;
+  final int date;
 
-  late final bool isValid;
+  final bool isValid;
 
-  Notice._fromJson(String data) {
+  const Notice(this.content, this.date, [this.isValid = true]);
+
+  static Notice _fromJson(String data) {
     final Map<String, dynamic> decoded = json.decode(data);
 
-    content = decoded['content'] ?? '';
-    date = decoded['date'] ?? 0;
-    isValid = decoded['enable'] ?? false;
+    final content = decoded['content'] ?? '';
+    final date = decoded['date'] ?? 0;
+    final isValid = decoded['enable'] ?? false;
+
+    return Notice(content, date, isValid);
   }
 
   @override
@@ -62,7 +67,7 @@ class Cdn {
 
   final double rate;
 
-  const Cdn._internal(this.url, this.rate);
+  const Cdn(this.url, [this.rate = 0.0]);
 
   String thumbImageUrl(PostBase post) =>
       '${url}thumb/${post.image}${post.imageExtension}';
@@ -76,7 +81,7 @@ class Cdn {
 
     return <Cdn>[
       for (final Map<String, dynamic> map in decoded)
-        Cdn._internal(map['url'] ?? XdnmbUrls.originCdnUrl, map['rate'] ?? 0.0)
+        Cdn(map['url'] ?? XdnmbUrls.originCdnUrl, map['rate'] ?? 0.0)
     ];
   }
 
@@ -99,6 +104,8 @@ abstract class ForumBase {
   String get message;
 
   int get maxPage;
+
+  const ForumBase();
 
   @override
   bool operator ==(Object other) =>
@@ -136,7 +143,7 @@ class Timeline implements ForumBase {
   @override
   final int maxPage;
 
-  const Timeline._internal(
+  const Timeline(
       {required this.id,
       required this.name,
       this.displayName = '',
@@ -149,7 +156,7 @@ class Timeline implements ForumBase {
 
     return <Timeline>[
       for (final Map<String, dynamic> map in decoded)
-        Timeline._internal(
+        Timeline(
             id: map['id'],
             name: map['name'] ?? '未知时间线',
             displayName: map['display_name'] ?? '',
@@ -182,6 +189,9 @@ class ForumGroup {
 
   /// 总是'n'
   final String status;
+
+  const ForumGroup(
+      {required this.id, this.sort = 1, required this.name, this.status = 'n'});
 
   ForumGroup._fromMap(Map<String, dynamic> map)
       : id = int.parse(map['id']),
@@ -239,9 +249,24 @@ class Forum implements ForumBase {
   @override
   int get maxPage => 100;
 
+  const Forum(
+      {required this.id,
+      this.forumGroupId = 4,
+      this.sort = 1,
+      required this.name,
+      this.displayName = '',
+      required this.message,
+      this.interval = 30,
+      required this.threadCount,
+      this.permissionLevel = 0,
+      this.forumFuseId = 0,
+      this.createTime = '',
+      this.updateTime = '',
+      this.status = 'n'});
+
   Forum._fromMap(Map<String, dynamic> map)
       : id = int.parse(map['id']),
-        forumGroupId = int.parse(map['fgroup']),
+        forumGroupId = int.tryParse(map['fgroup'] ?? '4') ?? 4,
         sort = int.tryParse(map['sort'] ?? '1') ?? 1,
         name = map['name'] ?? '未知板块',
         displayName = map['showName'] ?? '',
@@ -296,13 +321,16 @@ class ForumList {
 
   final List<Forum> forumList;
 
-  late final List<Timeline>? timelineList;
+  final List<Timeline>? timelineList;
 
-  ForumList._fromJson(String data)
-      : forumGroupList = <ForumGroup>[],
-        forumList = <Forum>[] {
+  const ForumList(this.forumGroupList, this.forumList, [this.timelineList]);
+
+  static ForumList _fromJson(String data) {
     final decoded = json.decode(data);
     _handleJsonError(decoded);
+    final forumGroupList = <ForumGroup>[];
+    final forumList = <Forum>[];
+    List<Timeline>? timelineList;
 
     var hasTimeline = false;
     for (final Map<String, dynamic> map in decoded) {
@@ -315,7 +343,7 @@ class ForumList {
             timelineList = <Timeline>[];
             hasTimeline = true;
           }
-          timelineList!.add(Timeline._internal(
+          timelineList!.add(Timeline(
               id: id,
               name: forum['name'] ?? '未知时间线',
               message: forum['msg'] ?? ''));
@@ -328,6 +356,8 @@ class ForumList {
         timelineList = null;
       }
     }
+
+    return ForumList(forumGroupList, forumList, timelineList);
   }
 
   @override
@@ -368,6 +398,8 @@ abstract class PostBase {
   bool get isAdmin;
 
   bool? get isHidden;
+
+  const PostBase();
 
   @override
   bool operator ==(Object other) =>
@@ -461,6 +493,21 @@ class Post implements PostBase {
   @override
   final bool isHidden;
 
+  const Post(
+      {required this.id,
+      required this.forumId,
+      required this.replyCount,
+      this.image = '',
+      this.imageExtension = '',
+      required this.postTime,
+      required this.userHash,
+      this.name = '无名氏',
+      this.title = '无标题',
+      required this.content,
+      this.isSage = false,
+      this.isAdmin = false,
+      this.isHidden = false});
+
   Post._formMap(Map<String, dynamic> map)
       : id = map['id'],
         forumId = map['fid'],
@@ -522,8 +569,7 @@ class ForumThread {
 
   final int? remainReplies;
 
-  const ForumThread._internal(this.mainPost, this.recentReplies,
-      [this.remainReplies]);
+  const ForumThread(this.mainPost, this.recentReplies, [this.remainReplies]);
 
   static List<ForumThread> _fromJson(String data) {
     final decoded = json.decode(data);
@@ -531,7 +577,7 @@ class ForumThread {
 
     return <ForumThread>[
       for (final Map<String, dynamic> forumThread in decoded)
-        ForumThread._internal(
+        ForumThread(
             Post._formMap(forumThread),
             <Post>[
               for (final Map<String, dynamic> reply in forumThread['Replies'])
@@ -593,6 +639,17 @@ class Tip implements PostBase {
   @override
   bool? get isHidden => null;
 
+  const Tip(
+      {this.id = 9999999,
+      required this.userHash,
+      this.isAdmin = true,
+      this.title = '无标题',
+      required this.postTime,
+      required this.content,
+      this.image = '',
+      this.imageExtension = '',
+      this.name = '无名氏'});
+
   Tip._fromMap(Map<String, dynamic> map)
       : id = map['id'] ?? 9999999,
         userHash = map['user_hash'] ?? '',
@@ -640,20 +697,24 @@ class Tip implements PostBase {
 }
 
 class Thread {
-  late final Post mainPost;
+  final Post mainPost;
 
   /// 主串某一页的回复。
   ///
   /// [replies]长度为0时说明这一页和后面的页数都没有回复。
-  late final List<Post> replies;
+  final List<Post> replies;
 
-  late final Tip? tip;
+  final Tip? tip;
 
-  Thread._fromJson(String data) {
+  const Thread(this.mainPost, this.replies, [this.tip]);
+
+  static Thread _fromJson(String data) {
     final decoded = json.decode(data);
     _handleJsonError(decoded);
 
-    mainPost = Post._formMap(decoded);
+    final mainPost = Post._formMap(decoded);
+    late final List<Post> replies;
+    Tip? tip;
     final List<dynamic> replyList = decoded['Replies'];
 
     if (replyList.isNotEmpty) {
@@ -671,6 +732,8 @@ class Thread {
       replies = <Post>[];
       tip = null;
     }
+
+    return Thread(mainPost, replies, tip);
   }
 
   @override
@@ -694,6 +757,8 @@ abstract class ReferenceBase implements PostBase {
 
   @override
   bool? get isHidden => null;
+
+  const ReferenceBase();
 
   @override
   bool operator ==(Object other) =>
@@ -720,53 +785,79 @@ abstract class ReferenceBase implements PostBase {
 
 class Reference extends ReferenceBase {
   @override
-  late final int id;
+  final int id;
 
   @override
-  late final String image;
+  final String image;
 
   @override
-  late final String imageExtension;
+  final String imageExtension;
 
   @override
-  late final DateTime postTime;
+  final DateTime postTime;
 
   @override
-  late final String userHash;
+  final String userHash;
 
   @override
-  late final String name;
+  final String name;
 
   @override
-  late final String title;
+  final String title;
 
   @override
-  late final String content;
+  final String content;
 
   @override
-  late final bool isSage;
+  final bool isSage;
 
   /// 总是'n'
-  late final String status;
+  final String status;
 
   @override
-  late final bool isAdmin;
+  final bool isAdmin;
 
-  Reference._fromJson(String data) {
+  const Reference(
+      {required this.id,
+      this.image = '',
+      this.imageExtension = '',
+      required this.postTime,
+      required this.userHash,
+      this.name = '无名氏',
+      this.title = '无标题',
+      required this.content,
+      this.isSage = false,
+      this.status = 'n',
+      this.isAdmin = false});
+
+  static Reference _fromJson(String data) {
     final decoded = json.decode(data);
     _handleJsonError(decoded);
 
-    id = decoded['id'];
-    image = decoded['img'] ?? '';
-    imageExtension = decoded['ext'] ?? '';
-    postTime = _parseTimeString(decoded['now']);
-    userHash = decoded['user_hash'];
-    name = decoded['name'] ?? '无名氏';
-    title = decoded['title'] ?? '无标题';
-    content = decoded['content'];
-    isSage = (decoded['sage'] ?? 0) == 0 ? false : true;
-    status = decoded['status'] ?? 'n';
-    isAdmin = (decoded['admin'] ?? 0) == 0 ? false : true;
+    final id = decoded['id'];
+    final image = decoded['img'] ?? '';
+    final imageExtension = decoded['ext'] ?? '';
+    final postTime = _parseTimeString(decoded['now']);
+    final userHash = decoded['user_hash'];
+    final name = decoded['name'] ?? '无名氏';
+    final title = decoded['title'] ?? '无标题';
+    final content = decoded['content'];
+    final isSage = (decoded['sage'] ?? 0) == 0 ? false : true;
+    final status = decoded['status'] ?? 'n';
+    final isAdmin = (decoded['admin'] ?? 0) == 0 ? false : true;
+
+    return Reference(
+        id: id,
+        image: image,
+        imageExtension: imageExtension,
+        postTime: postTime,
+        userHash: userHash,
+        name: name,
+        title: title,
+        content: content,
+        isSage: isSage,
+        status: status,
+        isAdmin: isAdmin);
   }
 
   @override
@@ -808,39 +899,52 @@ class Reference extends ReferenceBase {
 
 class HtmlReference extends ReferenceBase {
   @override
-  late final int id;
+  final int id;
 
   @override
-  late final String image;
+  final String image;
 
   @override
-  late final String imageExtension;
+  final String imageExtension;
 
   @override
-  late final DateTime postTime;
+  final DateTime postTime;
 
   @override
-  late final String userHash;
+  final String userHash;
 
   @override
-  late final String name;
+  final String name;
 
   @override
-  late final String title;
+  final String title;
 
   @override
-  late final String content;
+  final String content;
 
   @override
-  late final bool isAdmin;
+  final bool isAdmin;
 
-  late final int? mainPostId;
+  final int? mainPostId;
 
   @override
   bool? get isSage => null;
 
-  HtmlReference._fromHtml(String data) {
+  const HtmlReference(
+      {required this.id,
+      this.image = '',
+      this.imageExtension = '',
+      required this.postTime,
+      required this.userHash,
+      this.name = '无名氏',
+      this.title = '无标题',
+      required this.content,
+      this.isAdmin = false,
+      this.mainPostId});
+
+  static HtmlReference _fromHtml(String data) {
     final document = parse(data);
+    _handleDocument(document);
 
     var element = document.querySelector('a.h-threads-info-id');
     if (element == null) {
@@ -850,7 +954,9 @@ class HtmlReference extends ReferenceBase {
     if (str == null) {
       throw XdnmbApiException('HtmlReference里没找到id');
     }
-    id = int.parse(str);
+    final id = int.parse(str);
+
+    int? mainPostId;
     final href = element.attributes['href'];
     if (href != null) {
       final str = _RegExp._parseMainPostId.firstMatch(href)?[1];
@@ -863,6 +969,8 @@ class HtmlReference extends ReferenceBase {
       mainPostId = null;
     }
 
+    late final String image;
+    late final String imageExtension;
     element = document.querySelector('img.h-threads-img');
     if (element == null) {
       image = '';
@@ -884,8 +992,10 @@ class HtmlReference extends ReferenceBase {
     if (element == null) {
       throw XdnmbApiException('HtmlReference里没找到postTime');
     }
-    postTime = _parseTimeString(element.innerHtml);
+    final postTime = _parseTimeString(element.innerHtml);
 
+    late final String userHash;
+    late final bool isAdmin;
     element = document.querySelector('span.h-threads-info-uid');
     if (element == null) {
       throw XdnmbApiException('HtmlReference里没找到userHash');
@@ -907,19 +1017,31 @@ class HtmlReference extends ReferenceBase {
     if (element == null) {
       throw XdnmbApiException('HtmlReference里没找到name');
     }
-    name = element.innerHtml;
+    final name = element.innerHtml;
 
     element = document.querySelector('span.h-threads-info-title');
     if (element == null) {
       throw XdnmbApiException('HtmlReference里没找到title');
     }
-    title = element.innerHtml;
+    final title = element.innerHtml;
 
     element = document.querySelector('div.h-threads-content');
     if (element == null) {
       throw XdnmbApiException('HtmlReference里没找到content');
     }
-    content = element.innerHtml.trim();
+    final content = element.innerHtml.trim();
+
+    return HtmlReference(
+        id: id,
+        image: image,
+        imageExtension: imageExtension,
+        postTime: postTime,
+        userHash: userHash,
+        name: name,
+        title: title,
+        content: content,
+        isAdmin: isAdmin,
+        mainPostId: mainPostId);
   }
 
   @override
@@ -1014,26 +1136,26 @@ class FeedPost implements PostBase {
   @override
   bool? get isSage => null;
 
-  const FeedPost._internal(
+  const FeedPost(
       {required this.id,
-      required this.userId,
+      this.userId = 0,
       required this.forumId,
       required this.replyCount,
       required this.recentReplies,
-      required this.category,
-      required this.fileId,
-      required this.image,
-      required this.imageExtension,
+      this.category = '',
+      this.fileId = 0,
+      this.image = '',
+      this.imageExtension = '',
       required this.postTime,
       required this.userHash,
-      required this.name,
-      required this.email,
-      required this.title,
+      this.name = '',
+      this.email = '',
+      this.title = '',
       required this.content,
-      required this.status,
-      required this.isAdmin,
-      required this.isHidden,
-      required this.po});
+      this.status = 'n',
+      this.isAdmin = false,
+      this.isHidden = false,
+      this.po = ''});
 
   static List<FeedPost> _fromJson(String data) {
     final decoded = json.decode(data);
@@ -1041,7 +1163,7 @@ class FeedPost implements PostBase {
 
     return <FeedPost>[
       for (final Map<String, dynamic> map in decoded)
-        FeedPost._internal(
+        FeedPost(
             id: int.parse(map['id']),
             userId: int.tryParse(map['user_id'] ?? '0') ?? 0,
             forumId: int.parse(map['fid']),
@@ -1064,7 +1186,7 @@ class FeedPost implements PostBase {
                 (int.tryParse(map['admin'] ?? '0') ?? 0) == 0 ? false : true,
             isHidden:
                 (int.tryParse(map['hide'] ?? '0') ?? 0) == 0 ? false : true,
-            po: map['po'])
+            po: map['po'] ?? '')
     ];
   }
 
@@ -1194,6 +1316,156 @@ class Image {
   int get hashCode => Object.hash(filename, data, imageType);
 }
 
+class Emoticon {
+  static const List<Emoticon> list = [
+    Emoticon(name: '|∀ﾟ', text: '|∀ﾟ'),
+    Emoticon(name: '(´ﾟДﾟ`)', text: '(´ﾟДﾟ`)'),
+    Emoticon(name: '(;´Д`)', text: '(;´Д`)'),
+    Emoticon(name: '(｀･ω･)', text: '(｀･ω･)'),
+    Emoticon(name: '(=ﾟωﾟ)=', text: '(=ﾟωﾟ)='),
+    Emoticon(name: '| ω・´)', text: '| ω・´)'),
+    Emoticon(name: '|-` )', text: '|-` )'),
+    Emoticon(name: '|д` )', text: '|д` )'),
+    Emoticon(name: '|ー` )', text: '|ー` )'),
+    Emoticon(name: '|∀` )', text: '|∀` )'),
+    Emoticon(name: '(つд⊂)', text: '(つд⊂)'),
+    Emoticon(name: '(ﾟДﾟ≡ﾟДﾟ)', text: '(ﾟДﾟ≡ﾟДﾟ)'),
+    Emoticon(name: '(＾o＾)ﾉ', text: '(＾o＾)ﾉ'),
+    Emoticon(name: '(|||ﾟДﾟ)', text: '(|||ﾟДﾟ)'),
+    Emoticon(name: '( ﾟ∀ﾟ)', text: '( ﾟ∀ﾟ)'),
+    Emoticon(name: '( ´∀`)', text: '( ´∀`)'),
+    Emoticon(name: '(*´∀`)', text: '(*´∀`)'),
+    Emoticon(name: '(*ﾟ∇ﾟ)', text: '(*ﾟ∇ﾟ)'),
+    Emoticon(name: '(*ﾟーﾟ)', text: '(*ﾟーﾟ)'),
+    Emoticon(name: '(　ﾟ 3ﾟ)', text: '(　ﾟ 3ﾟ)'),
+    Emoticon(name: '( ´ー`)', text: '( ´ー`)'),
+    Emoticon(name: '( ・_ゝ・)', text: '( ・_ゝ・)'),
+    Emoticon(name: '( ´_ゝ`)', text: '( ´_ゝ`)'),
+    Emoticon(name: '(*´д`)', text: '(*´д`)'),
+    Emoticon(name: '(・ー・)', text: '(・ー・)'),
+    Emoticon(name: '(・∀・)', text: '(・∀・)'),
+    Emoticon(name: '(ゝ∀･)', text: '(ゝ∀･)'),
+    Emoticon(name: '(〃∀〃)', text: '(〃∀〃)'),
+    Emoticon(name: '(*ﾟ∀ﾟ*)', text: '(*ﾟ∀ﾟ*)'),
+    Emoticon(name: '( ﾟ∀。)', text: '( ﾟ∀。)'),
+    Emoticon(name: '( `д´)', text: '( `д´)'),
+    Emoticon(name: '(`ε´ )', text: '(`ε´ )'),
+    Emoticon(name: '(`ヮ´ )', text: '(`ヮ´ )'),
+    Emoticon(name: 'σ`∀´)', text: 'σ`∀´)'),
+    Emoticon(name: ' ﾟ∀ﾟ)σ', text: ' ﾟ∀ﾟ)σ'),
+    Emoticon(name: 'ﾟ ∀ﾟ)ノ', text: 'ﾟ ∀ﾟ)ノ'),
+    Emoticon(name: '(╬ﾟдﾟ)', text: '(╬ﾟдﾟ)'),
+    Emoticon(name: '(|||ﾟдﾟ)', text: '(|||ﾟдﾟ)'),
+    Emoticon(name: '( ﾟдﾟ)', text: '( ﾟдﾟ)'),
+    Emoticon(name: 'Σ( ﾟдﾟ)', text: 'Σ( ﾟдﾟ)'),
+    Emoticon(name: '( ;ﾟдﾟ)', text: '( ;ﾟдﾟ)'),
+    Emoticon(name: '( ;´д`)', text: '( ;´д`)'),
+    Emoticon(name: '(　д ) ﾟ ﾟ', text: '(　д ) ﾟ ﾟ'),
+    Emoticon(name: '( ☉д⊙)', text: '( ☉д⊙)'),
+    Emoticon(name: '(((　ﾟдﾟ)))', text: '(((　ﾟдﾟ)))'),
+    Emoticon(name: '( ` ・´)', text: '( ` ・´)'),
+    Emoticon(name: '( ´д`)', text: '( ´д`)'),
+    Emoticon(name: '( -д-)', text: '( -д-)'),
+    Emoticon(name: '(>д<)', text: '(>д<)'),
+    Emoticon(name: '･ﾟ( ﾉд`ﾟ)', text: '･ﾟ( ﾉд`ﾟ)'),
+    Emoticon(name: '( TдT)', text: '( TдT)'),
+    Emoticon(name: '(￣∇￣)', text: '(￣∇￣)'),
+    Emoticon(name: '(￣3￣)', text: '(￣3￣)'),
+    Emoticon(name: '(￣ｰ￣)', text: '(￣ｰ￣)'),
+    Emoticon(name: '(￣ . ￣)', text: '(￣ . ￣)'),
+    Emoticon(name: '(￣皿￣)', text: '(￣皿￣)'),
+    Emoticon(name: '(￣艸￣)', text: '(￣艸￣)'),
+    Emoticon(name: '(￣︿￣)', text: '(￣︿￣)'),
+    Emoticon(name: '(￣︶￣)', text: '(￣︶￣)'),
+    Emoticon(name: 'ヾ(´ωﾟ｀)', text: 'ヾ(´ωﾟ｀)'),
+    Emoticon(name: '(*´ω`*)', text: '(*´ω`*)'),
+    Emoticon(name: '(・ω・)', text: '(・ω・)'),
+    Emoticon(name: '( ´・ω)', text: '( ´・ω)'),
+    Emoticon(name: '(｀・ω)', text: '(｀・ω)'),
+    Emoticon(name: '(´・ω・`)', text: '(´・ω・`)'),
+    Emoticon(name: '(`・ω・´)', text: '(`・ω・´)'),
+    Emoticon(name: '( `_っ´)', text: '( `_っ´)'),
+    Emoticon(name: '( `ー´)', text: '( `ー´)'),
+    Emoticon(name: '( ´_っ`)', text: '( ´_っ`)'),
+    Emoticon(name: '( ´ρ`)', text: '( ´ρ`)'),
+    Emoticon(name: '( ﾟωﾟ)', text: '( ﾟωﾟ)'),
+    Emoticon(name: '(oﾟωﾟo)', text: '(oﾟωﾟo)'),
+    Emoticon(name: '(　^ω^)', text: '(　^ω^)'),
+    Emoticon(name: '(｡◕∀◕｡)', text: '(｡◕∀◕｡)'),
+    Emoticon(name: r'/( ◕‿‿◕ )\', text: r'/( ◕‿‿◕ )\'),
+    Emoticon(name: 'ヾ(´ε`ヾ)', text: 'ヾ(´ε`ヾ)'),
+    Emoticon(name: '(ノﾟ∀ﾟ)ノ', text: '(ノﾟ∀ﾟ)ノ'),
+    Emoticon(name: '(σﾟдﾟ)σ', text: '(σﾟдﾟ)σ'),
+    Emoticon(name: '(σﾟ∀ﾟ)σ', text: '(σﾟ∀ﾟ)σ'),
+    Emoticon(name: '|дﾟ )', text: '|дﾟ )'),
+    Emoticon(name: '┃電柱┃', text: '┃電柱┃'),
+    Emoticon(name: 'ﾟ(つд`ﾟ)', text: 'ﾟ(つд`ﾟ)'),
+    Emoticon(name: 'ﾟÅﾟ )　', text: 'ﾟÅﾟ )　'),
+    Emoticon(name: '⊂彡☆))д`)', text: '⊂彡☆))д`)'),
+    Emoticon(name: '⊂彡☆))д´)', text: '⊂彡☆))д´)'),
+    Emoticon(name: '⊂彡☆))∀`)', text: '⊂彡☆))∀`)'),
+    Emoticon(name: '(´∀((☆ミつ', text: '(´∀((☆ミつ'),
+    Emoticon(name: '･ﾟ( ﾉヮ´ )', text: '･ﾟ( ﾉヮ´ )'),
+    Emoticon(name: '(ﾉ)`ω´(ヾ)', text: '(ﾉ)`ω´(ヾ)'),
+    Emoticon(name: 'ᕕ( ᐛ )ᕗ', text: 'ᕕ( ᐛ )ᕗ'),
+    Emoticon(name: '(　ˇωˇ)', text: '(　ˇωˇ)'),
+    Emoticon(name: '( ｣ﾟДﾟ)｣＜', text: '( ｣ﾟДﾟ)｣＜'),
+    Emoticon(name: '( ›´ω`‹ )', text: '( ›´ω`‹ )'),
+    Emoticon(name: '(;´ヮ`)7', text: '(;´ヮ`)7'),
+    Emoticon(name: '(`ゥ´ )', text: '(`ゥ´ )'),
+    Emoticon(name: '(`ᝫ´ )', text: '(`ᝫ´ )'),
+    Emoticon(name: '( ᑭ`д´)ᓀ))д´)ᑫ', text: '( ᑭ`д´)ᓀ))д´)ᑫ'),
+    Emoticon(name: 'σ( ᑒ )', text: 'σ( ᑒ )'),
+    Emoticon(name: '齐齐蛤尔', text: '(`ヮ´ )σ`∀´) ﾟ∀ﾟ)σ'),
+    Emoticon(
+        name: '大嘘',
+        text: r'吁~~~~　　rnm，退钱！\n 　　　/　　　/ \n(　ﾟ 3ﾟ) `ー´) `д´) `д´)'),
+    Emoticon(name: '防剧透', text: '[h] [/h]'),
+    Emoticon(name: '骰子', text: '[n]'),
+    Emoticon(name: '高级骰子', text: '[n,m]'),
+  ];
+
+  final String name;
+
+  final String text;
+
+  const Emoticon({required this.name, required this.text});
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Emoticon && name == other.name && text == other.text);
+
+  @override
+  int get hashCode => Object.hash(name, text);
+}
+
+class ReportReason {
+  static const List<ReportReason> list = [
+    ReportReason(reason: '黄赌毒', text: '黄赌毒'),
+    ReportReason(reason: '政治敏感', text: '政治敏感'),
+    ReportReason(reason: '谣言欺诈', text: '谣言欺诈'),
+    ReportReason(reason: '广告q群', text: '广告q群'),
+    ReportReason(reason: '引战辱骂', text: '引战辱骂'),
+    ReportReason(reason: '串版', text: '串版'),
+    ReportReason(reason: '自删', text: '自删'),
+  ];
+
+  final String reason;
+
+  final String text;
+
+  const ReportReason({required this.reason, required this.text});
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ReportReason && reason == other.reason && text == other.text);
+
+  @override
+  int get hashCode => Object.hash(reason, text);
+}
+
 class XdnmbApi {
   final Client _client;
 
@@ -1256,6 +1528,29 @@ class XdnmbApi {
         XdnmbUrls().forum(forumId, page: page), cookie ?? xdnmbCookie?.cookie);
 
     return ForumThread._fromJson(response.utf8Body);
+  }
+
+  Future<String> getHtmlForumMessage(int forumId,
+      {int page = 1, String? cookie}) async {
+    if (forumId <= 0) {
+      throw XdnmbApiException('板块ID要大于0');
+    }
+    if (page <= 0) {
+      throw XdnmbApiException('页数要大于0');
+    }
+
+    final response = await _client.xGet(
+        XdnmbUrls().htmlForum(forumId, page: page),
+        cookie ?? xdnmbCookie?.cookie);
+    final document = parse(response.utf8Body);
+    _handleDocument(document);
+
+    final rule = document.querySelector('div.h-forum-header');
+    if (rule == null) {
+      throw XdnmbApiException('没找到板块信息');
+    }
+
+    return rule.innerHtml.trim();
   }
 
   /// [page]最大值根据[Timeline.maxPage]。
@@ -1328,10 +1623,8 @@ class XdnmbApi {
 
     final response = await _client.xGet(
         XdnmbUrls().htmlReference(postId), cookie ?? xdnmbCookie?.cookie);
-    final body = response.utf8Body;
-    _handleHtml(body);
 
-    return HtmlReference._fromHtml(body);
+    return HtmlReference._fromHtml(response.utf8Body);
   }
 
   /// 最多10个
@@ -1546,10 +1839,9 @@ class XdnmbApi {
     }
     final response =
         await _client.xGet(XdnmbUrls().getCookie(cookieId), userCookie);
-    final body = response.utf8Body;
-    _handleHtml(body);
+    final document = parse(response.utf8Body);
+    _handleDocument(document);
 
-    final document = parse(body);
     final element = document.querySelector('.tpl-form-maintext img');
     if (element == null) {
       throw XdnmbApiException('获取饼干失败');
@@ -1573,10 +1865,9 @@ class XdnmbApi {
       throw XdnmbApiException('获取饼干列表需要用户Cookie');
     }
     final response = await _client.xGet(XdnmbUrls().cookiesList, userCookie);
-    final body = response.utf8Body;
-    _handleHtml(body);
+    final document = parse(response.utf8Body);
+    _handleDocument(document);
 
-    final document = parse(body);
     var element = document.querySelector('b.am-text-success');
     late final bool canGetCookie;
     if (element == null) {
@@ -1667,9 +1958,7 @@ void _handleJsonError(dynamic decoded) {
   }
 }
 
-String? _handleHtml(String data) {
-  final document = parse(data);
-
+String? _handleDocument(Document document) {
   final success = document.querySelector('p.success');
   if (success != null) {
     return success.innerHtml;
@@ -1682,6 +1971,8 @@ String? _handleHtml(String data) {
 
   return null;
 }
+
+String? _handleHtml(String data) => _handleDocument(parse(data));
 
 DateTime _parseTimeString(String timeString) {
   final time = timeString.replaceFirst(_RegExp._parseDay, 'T');

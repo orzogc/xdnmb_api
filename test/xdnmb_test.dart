@@ -73,7 +73,7 @@ void main() async {
       }
     });
 
-    test('getForumThreads() gets forum threads', () async {
+    test('getForum() gets forum threads', () async {
       final forumList = await xdnmb.getForumList();
 
       for (final forum in forumList.forumList) {
@@ -91,7 +91,16 @@ void main() async {
           throwsA(isA<XdnmbApiException>()));
     });
 
-    test('getTimelineThreads() gets timeline threads', () async {
+    test('getHtmlForumMessage() gets the html forum message', () async {
+      final rule = await xdnmb.getHtmlForumMessage(4);
+
+      expect(rule, isNotEmpty);
+
+      await expectLater(() async => await xdnmb.getHtmlForumMessage(0),
+          throwsA(isA<XdnmbApiException>()));
+    });
+
+    test('getTimeline() gets timeline threads', () async {
       final timelineList = await xdnmb.getTimelineList();
 
       for (final timeline in timelineList) {
