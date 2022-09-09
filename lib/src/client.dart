@@ -62,17 +62,20 @@ class Client extends IOClient {
 
   static const String _userAgent = 'xdnmb';
 
+  final Duration _timeout;
+
   String? xdnmbPhpSessionId;
 
   Client({Duration timeout = const Duration(seconds: 15)})
-      : super(HttpClient()
+      : _timeout = timeout + Duration(seconds: 1),
+        super(HttpClient()
           ..connectionTimeout = timeout
           ..idleTimeout = _idleTimeout);
 
   @override
   Future<IOStreamedResponse> send(BaseRequest request) async {
     request.headers[HttpHeaders.userAgentHeader] = _userAgent;
-    final response = await super.send(request);
+    final response = await super.send(request).timeout(_timeout);
 
     final setCookie = response.headers[HttpHeaders.setCookieHeader];
     if (setCookie != null) {
@@ -87,7 +90,7 @@ class Client extends IOClient {
 
   Future<Response> xGet(String url, [String? cookie]) async {
     final response = await this.get(Uri.parse(url),
-        headers: cookie != null || xdnmbPhpSessionId != null
+        headers: (cookie != null || xdnmbPhpSessionId != null)
             ? {
                 HttpHeaders.cookieHeader: _toCookies([
                   if (cookie != null) cookie,
@@ -103,7 +106,7 @@ class Client extends IOClient {
   Future<Response> xPostForm(String url, Map<String, String>? form,
       [String? cookie]) async {
     final response = await this.post(Uri.parse(url),
-        headers: cookie != null || xdnmbPhpSessionId != null
+        headers: (cookie != null || xdnmbPhpSessionId != null)
             ? {
                 HttpHeaders.cookieHeader: _toCookies([
                   if (cookie != null) cookie,

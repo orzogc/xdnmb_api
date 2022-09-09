@@ -69,11 +69,9 @@ class Cdn {
 
   const Cdn(this.url, [this.rate = 0.0]);
 
-  String thumbImageUrl(PostBase post) =>
-      '${url}thumb/${post.image}${post.imageExtension}';
+  String thumbImageUrl(PostBase post) => '${url}thumb/${post.imageFile()}';
 
-  String imageUrl(PostBase post) =>
-      '${url}image/${post.image}${post.imageExtension}';
+  String imageUrl(PostBase post) => '${url}image/${post.imageFile()}';
 
   static List<Cdn> _fromJson(String data) {
     final decoded = json.decode(data);
@@ -439,11 +437,13 @@ abstract class PostBase {
 extension BasePostExtension on PostBase {
   bool hasImage() => image.isNotEmpty;
 
+  String? imageFile() => hasImage() ? '$image$imageExtension' : null;
+
   String? thumbImageUrl() =>
-      hasImage() ? '${XdnmbUrls().cdnUrl}thumb/$image$imageExtension' : null;
+      hasImage() ? '${XdnmbUrls().cdnUrl}thumb/${imageFile()}' : null;
 
   String? imageUrl() =>
-      hasImage() ? '${XdnmbUrls().cdnUrl}image/$image$imageExtension' : null;
+      hasImage() ? '${XdnmbUrls().cdnUrl}image/${imageFile()}' : null;
 }
 
 /// X岛匿名版的串
@@ -1418,8 +1418,7 @@ class Emoticon {
     Emoticon(name: 'σ( ᑒ )', text: 'σ( ᑒ )'),
     Emoticon(name: '齐齐蛤尔', text: '(`ヮ´ )σ`∀´) ﾟ∀ﾟ)σ'),
     Emoticon(
-        name: '大嘘',
-        text: r'吁~~~~　　rnm，退钱！\n 　　　/　　　/ \n(　ﾟ 3ﾟ) `ー´) `д´) `д´)'),
+        name: '大嘘', text: '吁~~~~　　rnm，退钱！\n 　　　/　　　/ \n(　ﾟ 3ﾟ) `ー´) `д´) `д´)'),
     Emoticon(name: '防剧透', text: '[h] [/h]'),
     Emoticon(name: '骰子', text: '[n]'),
     Emoticon(name: '高级骰子', text: '[n,m]'),
@@ -1855,7 +1854,8 @@ class XdnmbApi {
     if (text == null) {
       throw XdnmbApiException('获取饼干失败');
     }
-    return XdnmbCookie._fromJson(utf8.decode(base64.decode(text)),
+    return XdnmbCookie._fromJson(
+        utf8.decode(base64.decode(text)).replaceAll('+', '%20'),
         id: cookieId);
   }
 
