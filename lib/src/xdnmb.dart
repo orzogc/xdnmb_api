@@ -952,7 +952,7 @@ class HtmlReference extends ReferenceBase {
     }
     final str = _RegExp._parseNum.stringMatch(element.innerHtml);
     if (str == null) {
-      throw XdnmbApiException('HtmlReference里没找到id');
+      throw XdnmbApiException('该串不存在');
     }
     final id = int.parse(str);
 
@@ -1081,7 +1081,7 @@ class HtmlReference extends ReferenceBase {
       isHidden);
 }
 
-class FeedPost implements PostBase {
+class Feed implements PostBase {
   @override
   final int id;
 
@@ -1136,7 +1136,7 @@ class FeedPost implements PostBase {
   @override
   bool? get isSage => null;
 
-  const FeedPost(
+  const Feed(
       {required this.id,
       this.userId = 0,
       required this.forumId,
@@ -1157,13 +1157,13 @@ class FeedPost implements PostBase {
       this.isHidden = false,
       this.po = ''});
 
-  static List<FeedPost> _fromJson(String data) {
+  static List<Feed> _fromJson(String data) {
     final decoded = json.decode(data);
     _handleJsonError(decoded);
 
-    return <FeedPost>[
+    return <Feed>[
       for (final Map<String, dynamic> map in decoded)
-        FeedPost(
+        Feed(
             id: int.parse(map['id']),
             userId: int.tryParse(map['user_id'] ?? '0') ?? 0,
             forumId: int.parse(map['fid']),
@@ -1193,7 +1193,7 @@ class FeedPost implements PostBase {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is FeedPost &&
+      (other is Feed &&
           id == other.id &&
           userId == other.userId &&
           forumId == other.forumId &&
@@ -1447,7 +1447,8 @@ class ReportReason {
     ReportReason(reason: '广告q群', text: '广告q群'),
     ReportReason(reason: '引战辱骂', text: '引战辱骂'),
     ReportReason(reason: '串版', text: '串版'),
-    ReportReason(reason: '自删', text: '自删'),
+    ReportReason(reason: '错字自删', text: '错字自删'),
+    ReportReason(reason: '错饼自删', text: '错饼自删'),
   ];
 
   final String reason;
@@ -1627,7 +1628,7 @@ class XdnmbApi {
   }
 
   /// 最多10个
-  Future<List<FeedPost>> getFeed(String uuid,
+  Future<List<Feed>> getFeed(String uuid,
       {int page = 1, String? cookie}) async {
     if (page <= 0) {
       throw XdnmbApiException('页数要大于0');
@@ -1636,7 +1637,7 @@ class XdnmbApi {
     final response = await _client.xGet(
         XdnmbUrls().feed(uuid, page: page), cookie ?? xdnmbCookie?.cookie);
 
-    return FeedPost._fromJson(response.utf8Body);
+    return Feed._fromJson(response.utf8Body);
   }
 
   Future<void> addFeed(String uuid, int mainPostId, {String? cookie}) async {

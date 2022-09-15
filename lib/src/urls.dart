@@ -66,13 +66,13 @@ class XdnmbUrls {
       '${xdnmbBaseUrl}Api/po?id=$mainPostId&page=$page';
 
   String feed(String uuid, {int page = 1}) =>
-      '${xdnmbBaseUrl}Api/feed?uuid=$uuid&page=$page';
+      '${xdnmbBaseUrl}Api/feed?uuid=${Uri.encodeQueryComponent(uuid)}&page=$page';
 
   String addFeed(String uuid, int mainPostId) =>
-      '${xdnmbBaseUrl}Api/addFeed?uuid=$uuid&tid=$mainPostId';
+      '${xdnmbBaseUrl}Api/addFeed?uuid=${Uri.encodeQueryComponent(uuid)}&tid=$mainPostId';
 
   String deleteFeed(String uuid, int mainPostId) =>
-      '${xdnmbBaseUrl}Api/delFeed?uuid=$uuid&tid=$mainPostId';
+      '${xdnmbBaseUrl}Api/delFeed?uuid=${Uri.encodeQueryComponent(uuid)}&tid=$mainPostId';
 
   String getCookie(int cookieId) =>
       '${xdnmbBaseUrl}Member/User/Cookie/export/id/$cookieId.html';
