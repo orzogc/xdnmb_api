@@ -19,20 +19,20 @@ class XdnmbCookie {
   }
 }
 
-class CookieList {
+class CookiesList {
   final bool canGetCookie;
 
   final int currentCookiesNum;
 
   final int totalCookiesNum;
 
-  final List<XdnmbCookie> cookiesList;
+  final List<int> cookiesIdList;
 
-  const CookieList._internal(
+  const CookiesList._internal(
       {required this.canGetCookie,
       required this.currentCookiesNum,
       required this.totalCookiesNum,
-      required this.cookiesList});
+      required this.cookiesIdList});
 }
 
 extension CookieExtension on Cookie {

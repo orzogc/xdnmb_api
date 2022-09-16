@@ -9,7 +9,7 @@ void main() async {
     final password = Platform.environment['XdnmbAccountPassword']!;
     final verifyImageFile = Platform.environment['XdnmbVerifyImageFile']!;
     final xdnmb = XdnmbApi();
-    CookieList? list;
+    CookiesList? list;
 
     test('getVerifyImage() gets the verifying image', () async {
       final image = await xdnmb.getVerifyImage();
@@ -33,7 +33,17 @@ void main() async {
       list = await xdnmb.getCookiesList();
 
       expect(list!.currentCookiesNum, lessThanOrEqualTo(list!.totalCookiesNum));
-      expect(list!.currentCookiesNum, equals(list!.cookiesList.length));
+      expect(list!.currentCookiesNum, equals(list!.cookiesIdList.length));
+    });
+
+    test('getCookie() gets the cookie', () async {
+      if (list!.currentCookiesNum > 0) {
+        final cookie = await xdnmb.getCookie(list!.cookiesIdList.first);
+
+        expect(cookie.userHash, isNotEmpty);
+        expect(cookie.name, isNotEmpty);
+        expect(cookie.id, equals(list!.cookiesIdList.first));
+      }
     });
 
     test(
@@ -43,12 +53,11 @@ void main() async {
         final file = File(verifyImageFile);
         await file.writeAsBytes(image);
         final verify = stdin.readLineSync();
-        final cookieId = list!.cookiesList.last.id!;
+        final cookieId = list!.cookiesIdList.last;
         await xdnmb.deleteCookie(cookieId: cookieId, verify: verify!.trim());
         list = await xdnmb.getCookiesList();
 
-        expect(
-            list!.cookiesList.any((cookie) => cookie.id == cookieId), isFalse);
+        expect(list!.cookiesIdList.any((id) => id == cookieId), isFalse);
       },
       /* skip: list == null || list!.cookiesList.isEmpty
             ? 'user has no cookies'

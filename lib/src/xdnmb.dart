@@ -1855,12 +1855,13 @@ class XdnmbApi {
     if (text == null) {
       throw XdnmbApiException('获取饼干失败');
     }
+
     return XdnmbCookie._fromJson(
         utf8.decode(base64.decode(text)).replaceAll('+', '%20'),
         id: cookieId);
   }
 
-  Future<CookieList> getCookiesList({String? userCookie}) async {
+  Future<CookiesList> getCookiesList({String? userCookie}) async {
     userCookie = userCookie ?? _userCookie;
     if (userCookie == null) {
       throw XdnmbApiException('获取饼干列表需要用户Cookie');
@@ -1911,16 +1912,12 @@ class XdnmbApi {
     if (idList.length != currentCookiesNum) {
       throw XdnmbApiException('获取饼干ID失败');
     }
-    final cookiesList = <XdnmbCookie>[];
-    for (final id in idList) {
-      cookiesList.add(await getCookie(id, userCookie: userCookie));
-    }
 
-    return CookieList._internal(
+    return CookiesList._internal(
         canGetCookie: canGetCookie,
         currentCookiesNum: currentCookiesNum,
         totalCookiesNum: totalCookiesNum,
-        cookiesList: cookiesList);
+        cookiesIdList: idList.toList());
   }
 
   Future<void> getNewCookie(
