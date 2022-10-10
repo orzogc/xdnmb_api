@@ -73,6 +73,17 @@ void main() async {
       }
     });
 
+    test('getHtmlForumInfo() gets the html forum information', () async {
+      final forum = await xdnmb.getHtmlForumInfo(4);
+
+      expect(forum.id, equals(4));
+      expect(forum.name, isNotEmpty);
+      expect(forum.message, isNotEmpty);
+
+      await expectLater(() async => await xdnmb.getHtmlForumInfo(0),
+          throwsA(isA<XdnmbApiException>()));
+    });
+
     test('getForum() gets forum threads', () async {
       final forumList = await xdnmb.getForumList();
 
@@ -88,15 +99,6 @@ void main() async {
       }
 
       await expectLater(() async => await xdnmb.getForum(0),
-          throwsA(isA<XdnmbApiException>()));
-    });
-
-    test('getHtmlForumMessage() gets the html forum message', () async {
-      final rule = await xdnmb.getHtmlForumMessage(4);
-
-      expect(rule, isNotEmpty);
-
-      await expectLater(() async => await xdnmb.getHtmlForumMessage(0),
           throwsA(isA<XdnmbApiException>()));
     });
 

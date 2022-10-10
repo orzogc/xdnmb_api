@@ -370,6 +370,58 @@ class ForumList {
   int get hashCode => Object.hash(forumGroupList, forumList, timelineList);
 }
 
+class HtmlForum implements ForumBase {
+  @override
+  final int id;
+
+  @override
+  final String name;
+
+  @override
+  String get displayName => '';
+
+  @override
+  final String message;
+
+  @override
+  int get maxPage => 100;
+
+  const HtmlForum(
+      {required this.id, required this.name, required this.message});
+
+  static HtmlForum _fromHtml(int forumId, String data) {
+    final document = parse(data);
+    _handleDocument(document);
+
+    var element = document.querySelector('h2.h-title');
+    if (element == null) {
+      throw XdnmbApiException('没找到板块名字');
+    }
+    final name = element.innerHtml;
+
+    element = document.querySelector('div.h-forum-header');
+    if (element == null) {
+      throw XdnmbApiException('没找到板块信息');
+    }
+    final message = element.innerHtml.trim();
+
+    return HtmlForum(id: forumId, name: name, message: message);
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is HtmlForum &&
+          id == other.id &&
+          name == other.name &&
+          displayName == other.displayName &&
+          message == other.message &&
+          maxPage == other.maxPage);
+
+  @override
+  int get hashCode => Object.hash(id, name, displayName, message, maxPage);
+}
+
 abstract class PostBase {
   int get id;
 
@@ -1512,6 +1564,17 @@ class XdnmbApi {
     return Timeline._fromJson(response.utf8Body);
   }
 
+  Future<HtmlForum> getHtmlForumInfo(int forumId, {String? cookie}) async {
+    if (forumId <= 0) {
+      throw XdnmbApiException('板块ID要大于0');
+    }
+
+    final response = await _client.xGet(
+        XdnmbUrls().htmlForum(forumId), cookie ?? xdnmbCookie?.cookie);
+
+    return HtmlForum._fromHtml(forumId, response.utf8Body);
+  }
+
   /// [page]最大为100。
   ///
   /// 一页最多20串。
@@ -1528,29 +1591,6 @@ class XdnmbApi {
         XdnmbUrls().forum(forumId, page: page), cookie ?? xdnmbCookie?.cookie);
 
     return ForumThread._fromJson(response.utf8Body);
-  }
-
-  Future<String> getHtmlForumMessage(int forumId,
-      {int page = 1, String? cookie}) async {
-    if (forumId <= 0) {
-      throw XdnmbApiException('板块ID要大于0');
-    }
-    if (page <= 0) {
-      throw XdnmbApiException('页数要大于0');
-    }
-
-    final response = await _client.xGet(
-        XdnmbUrls().htmlForum(forumId, page: page),
-        cookie ?? xdnmbCookie?.cookie);
-    final document = parse(response.utf8Body);
-    _handleDocument(document);
-
-    final rule = document.querySelector('div.h-forum-header');
-    if (rule == null) {
-      throw XdnmbApiException('没找到板块信息');
-    }
-
-    return rule.innerHtml.trim();
   }
 
   /// [page]最大值根据[Timeline.maxPage]。
@@ -1972,6 +2012,7 @@ String? _handleDocument(Document document) {
 
 String? _handleHtml(String data) => _handleDocument(parse(data));
 
+/// 返回UTC时间
 DateTime _parseTimeString(String timeString) {
   final time = timeString.replaceFirst(_RegExp._parseDay, 'T');
 
