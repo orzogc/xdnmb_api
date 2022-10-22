@@ -552,6 +552,10 @@ abstract class PostBase {
 
 /// [PostBase]的扩展
 extension BasePostExtension on PostBase {
+  int? get maxPage => replyCount != null
+      ? (replyCount! > 0 ? (replyCount! / 19).ceil() : 1)
+      : null;
+
   /// 串是否有图片
   bool hasImage() => image.isNotEmpty;
 
@@ -831,8 +835,6 @@ class Thread {
 
   /// 官方tip，随机出现
   final Tip? tip;
-
-  int get maxPage => replies.isNotEmpty ? (replies.length / 19).ceil() : 1;
 
   /// 构造[Thread]
   const Thread(this.mainPost, this.replies, [this.tip]);
