@@ -11,9 +11,12 @@ import 'urls.dart';
 
 part 'cookie.dart';
 
+/// X岛API的异常
 class XdnmbApiException implements Exception {
+  /// 异常信息
   final String message;
 
+  /// 构造[XdnmbApiException]
   const XdnmbApiException(this.message);
 
   @override
@@ -30,16 +33,21 @@ class XdnmbApiException implements Exception {
   int get hashCode => message.hashCode;
 }
 
+/// 公告
 class Notice {
+  /// 公告内容
   final String content;
 
   /// 公告发布的日期，部分格式未明
   final int date;
 
+  /// 公告是否有效
   final bool isValid;
 
+  /// 构造[Notice]
   const Notice(this.content, this.date, [this.isValid = true]);
 
+  /// 从JSON数据构造[Notice]
   static Notice _fromJson(String data) {
     final Map<String, dynamic> decoded = json.decode(data);
 
@@ -62,17 +70,24 @@ class Notice {
   int get hashCode => Object.hash(content, date, isValid);
 }
 
+/// X岛CDN
 class Cdn {
+  /// X岛CDN链接
   final String url;
 
+  /// 比例？
   final double rate;
 
+  /// 构造[Cdn]
   const Cdn(this.url, [this.rate = 0.0]);
 
+  /// 略缩图链接
   String thumbImageUrl(PostBase post) => '${url}thumb/${post.imageFile()}';
 
+  /// 大图链接
   String imageUrl(PostBase post) => '${url}image/${post.imageFile()}';
 
+  /// 从JSON数据构造[Cdn]列表
   static List<Cdn> _fromJson(String data) {
     final decoded = json.decode(data);
     _handleJsonError(decoded);
@@ -92,17 +107,24 @@ class Cdn {
   int get hashCode => Object.hash(url, rate);
 }
 
+/// 版块的基本类型，其他版块类型要实现[ForumBase]
 abstract class ForumBase {
+  /// 版块ID
   int get id;
 
+  /// 版块名字
   String get name;
 
+  /// 版块显示的名字，如果是空字符串的话应该要显示[name]
   String get displayName;
 
+  /// 版块信息
   String get message;
 
+  /// 版块的最大页数，大于[maxPage]的均返回页数为[maxPage]的内容
   int get maxPage;
 
+  /// 构造[ForumBase]
   const ForumBase();
 
   @override
@@ -119,10 +141,13 @@ abstract class ForumBase {
   int get hashCode => Object.hash(id, name, displayName, message, maxPage);
 }
 
+/// [ForumBase]的扩展
 extension ForumBaseExtension on ForumBase {
+  /// 版块显示的名字
   String get showName => displayName.isNotEmpty ? displayName : name;
 }
 
+/// 时间线
 class Timeline implements ForumBase {
   @override
   final int id;
@@ -130,17 +155,17 @@ class Timeline implements ForumBase {
   @override
   final String name;
 
-  /// 时间线显示的名字，如果是空字符串的话应该要显示[name]
   @override
   final String displayName;
 
   @override
   final String message;
 
-  /// 时间线的最大页数，大于[maxPage]的均显示页数为[maxPage]的内容，默认为20
+  /// 时间线的最大页数，大于[maxPage]的均返回页数为[maxPage]的内容，默认为20
   @override
   final int maxPage;
 
+  /// 构造[Timeline]
   const Timeline(
       {required this.id,
       required this.name,
@@ -148,6 +173,7 @@ class Timeline implements ForumBase {
       required this.message,
       this.maxPage = 20});
 
+  /// 从JSON数据构造[Timeline]列表
   static List<Timeline> _fromJson(String data) {
     final decoded = json.decode(data);
     _handleJsonError(decoded);
@@ -177,24 +203,29 @@ class Timeline implements ForumBase {
   int get hashCode => Object.hash(id, name, displayName, message, maxPage);
 }
 
+/// 版块组
 class ForumGroup {
+  /// 版块组ID
   final int id;
 
-  /// 板块组显示的排序，小的在前面
+  /// 版块组显示的排序，小的在前面
   final int sort;
 
+  /// 版块组名字
   final String name;
 
   /// 总是'n'
   final String status;
 
+  /// 构造[ForumGroup]
   const ForumGroup(
       {required this.id, this.sort = 1, required this.name, this.status = 'n'});
 
+  /// 从map数据中构造[ForumGroup]
   ForumGroup._fromMap(Map<String, dynamic> map)
       : id = int.parse(map['id']),
         sort = int.tryParse(map['sort'] ?? '1') ?? 1,
-        name = map['name'] ?? '未知板块组',
+        name = map['name'] ?? '未知版块组',
         status = map['status'] ?? 'n';
 
   @override
@@ -210,43 +241,58 @@ class ForumGroup {
   int get hashCode => Object.hash(id, sort, name, status);
 }
 
+/// 版块
 class Forum implements ForumBase {
   @override
   final int id;
 
+  /// 版块组ID
   final int forumGroupId;
 
+  /// 版块显示的排序，小的在前面
   final int sort;
 
   @override
   final String name;
 
-  /// 板块显示的名字，如果是空字符串的话应该要显示[name]
   @override
   final String displayName;
 
+  /// 版规
   @override
   final String message;
 
+  /// 版块内发串的最小时间间隔，单位为秒
   final int interval;
 
+  /// 是否保护模式
+  final bool safeMode;
+
+  /// 自动删除串的时间间隔？
+  final int autoDelete;
+
+  /// 版块内主串数量，包括被删除的串
   final int threadCount;
 
-  /// 大于0时需要饼干访问板块
+  /// 大于0时需要饼干访问版块，数值是最低饼干槽要求？
   final int permissionLevel;
 
   final int forumFuseId;
 
+  /// 版块创建时间，不一定准确
   final String createTime;
 
+  /// 版块更新时间，不一定准确
   final String updateTime;
 
   /// 总是'n'
   final String status;
 
+  /// 版块的最大页数，大于[maxPage]的均返回页数为[maxPage]的内容，版块的最大页数总是100
   @override
   int get maxPage => 100;
 
+  /// 构造[Forum]
   const Forum(
       {required this.id,
       this.forumGroupId = 4,
@@ -255,6 +301,8 @@ class Forum implements ForumBase {
       this.displayName = '',
       required this.message,
       this.interval = 30,
+      this.safeMode = false,
+      this.autoDelete = 0,
       required this.threadCount,
       this.permissionLevel = 0,
       this.forumFuseId = 0,
@@ -262,14 +310,17 @@ class Forum implements ForumBase {
       this.updateTime = '',
       this.status = 'n'});
 
+  /// 从map数据构造[Forum]
   Forum._fromMap(Map<String, dynamic> map)
       : id = int.parse(map['id']),
         forumGroupId = int.tryParse(map['fgroup'] ?? '4') ?? 4,
         sort = int.tryParse(map['sort'] ?? '1') ?? 1,
-        name = map['name'] ?? '未知板块',
+        name = map['name'] ?? '未知版块',
         displayName = map['showName'] ?? '',
         message = map['msg'] ?? '',
         interval = int.tryParse(map['interval'] ?? '30') ?? 30,
+        safeMode = (int.tryParse(map['safe_mode'] ?? '0') ?? 0) != 0,
+        autoDelete = int.tryParse(map['auto_delete'] ?? '0') ?? 0,
         threadCount = int.tryParse(map['thread_count'] ?? '0') ?? 0,
         permissionLevel = int.tryParse(map['permission_level'] ?? '0') ?? 0,
         forumFuseId = int.tryParse(map['forum_fuse_id'] ?? '0') ?? 0,
@@ -314,15 +365,21 @@ class Forum implements ForumBase {
       maxPage);
 }
 
+/// 版块列表
 class ForumList {
+  /// 版块群列表
   final List<ForumGroup> forumGroupList;
 
+  /// 版块列表
   final List<Forum> forumList;
 
+  /// 时间线列表
   final List<Timeline>? timelineList;
 
+  /// 构造[ForumList]
   const ForumList(this.forumGroupList, this.forumList, [this.timelineList]);
 
+  /// 从JSON数据构造[ForumList]
   static ForumList _fromJson(String data) {
     final decoded = json.decode(data);
     _handleJsonError(decoded);
@@ -330,18 +387,14 @@ class ForumList {
     final forumList = <Forum>[];
     List<Timeline>? timelineList;
 
-    var hasTimeline = false;
     for (final Map<String, dynamic> map in decoded) {
       forumGroupList.add(ForumGroup._fromMap(map));
 
       for (final Map<String, dynamic> forum in map['forums']) {
         final id = int.parse(forum['id']);
         if (id < 0) {
-          if (!hasTimeline) {
-            timelineList = <Timeline>[];
-            hasTimeline = true;
-          }
-          timelineList!.add(Timeline(
+          timelineList ??= <Timeline>[];
+          timelineList.add(Timeline(
               id: id,
               name: forum['name'] ?? '未知时间线',
               message: forum['msg'] ?? ''));
@@ -349,27 +402,13 @@ class ForumList {
           forumList.add(Forum._fromMap(forum));
         }
       }
-
-      if (!hasTimeline) {
-        timelineList = null;
-      }
     }
 
     return ForumList(forumGroupList, forumList, timelineList);
   }
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      (other is ForumList &&
-          forumGroupList == other.forumGroupList &&
-          forumList == other.forumList &&
-          timelineList == other.timelineList);
-
-  @override
-  int get hashCode => Object.hash(forumGroupList, forumList, timelineList);
 }
 
+/// 网页版版块
 class HtmlForum implements ForumBase {
   @override
   final int id;
@@ -377,31 +416,36 @@ class HtmlForum implements ForumBase {
   @override
   final String name;
 
+  /// 总是返回空字符串，所以版块名字显示用[name]
   @override
   String get displayName => '';
 
+  /// 版规
   @override
   final String message;
 
+  /// 版块的最大页数，大于[maxPage]的均返回页数为[maxPage]的内容，版块的最大页数总是100
   @override
   int get maxPage => 100;
 
+  /// 构造[HtmlForum]
   const HtmlForum(
       {required this.id, required this.name, required this.message});
 
+  /// 从HTML数据构造[HtmlForum]，[forumId]为版块ID
   static HtmlForum _fromHtml(int forumId, String data) {
     final document = parse(data);
     _handleDocument(document);
 
     var element = document.querySelector('h2.h-title');
     if (element == null) {
-      throw XdnmbApiException('没找到板块名字');
+      throw XdnmbApiException('没找到版块名字');
     }
     final name = element.innerHtml;
 
     element = document.querySelector('div.h-forum-header');
     if (element == null) {
-      throw XdnmbApiException('没找到板块信息');
+      throw XdnmbApiException('没找到版块信息');
     }
     final message = element.innerHtml.trim();
 
@@ -422,33 +466,50 @@ class HtmlForum implements ForumBase {
   int get hashCode => Object.hash(id, name, displayName, message, maxPage);
 }
 
+/// 串的基本类型，其他串类型要实现[PostBase]
 abstract class PostBase {
+  /// 串的ID
   int get id;
 
+  /// 串所在版块的ID
+  ///
+  /// 主串的[forumId]跟随实际版块，但由于移串，回串的[forumId]可能和主串的不相等
   int? get forumId;
 
+  /// 主串的回串数量，包含被删除的串，回串的[replyCount]为0
   int? get replyCount;
 
+  /// 图片
   String get image;
 
+  /// 图片的扩展名
   String get imageExtension;
 
+  /// 发表时间
   DateTime get postTime;
 
+  /// 用户饼干名字
   String get userHash;
 
+  /// 串的名称
   String get name;
 
+  /// 串的标题
   String get title;
 
+  /// 串的内容
   String get content;
 
+  /// 串是否sage（锁住回复）
   bool? get isSage;
 
+  /// 用户是否管理员（红名）
   bool get isAdmin;
 
+  /// 串是否被隐藏
   bool? get isHidden;
 
+  /// 构造[PostBase]
   const PostBase();
 
   @override
@@ -486,32 +547,31 @@ abstract class PostBase {
       isHidden);
 }
 
+/// [PostBase]的扩展
 extension BasePostExtension on PostBase {
+  /// 串是否有图片
   bool hasImage() => image.isNotEmpty;
 
+  /// 串图片名字
   String? imageFile() => hasImage() ? '$image$imageExtension' : null;
 
+  /// 串略缩图链接
   String? thumbImageUrl() =>
       hasImage() ? '${XdnmbUrls().cdnUrl}thumb/${imageFile()}' : null;
 
+  /// 串大图链接
   String? imageUrl() =>
       hasImage() ? '${XdnmbUrls().cdnUrl}image/${imageFile()}' : null;
 }
 
-/// X岛匿名版的串
+/// 串
 class Post implements PostBase {
   @override
   final int id;
 
-  /// 串所在板块的ID
-  ///
-  /// 主串的[forumId]跟随实际板块，但由于移串，回串的[forumId]可能和主串的不相等
   @override
   final int forumId;
 
-  /// 主串的回串数量，包含被删除的串。
-  ///
-  /// 回串的[replyCount]为0。
   @override
   final int replyCount;
 
@@ -545,6 +605,7 @@ class Post implements PostBase {
   @override
   final bool isHidden;
 
+  /// 构造[Post]
   const Post(
       {required this.id,
       required this.forumId,
@@ -560,6 +621,7 @@ class Post implements PostBase {
       this.isAdmin = false,
       this.isHidden = false});
 
+  /// 从map数据构造[Post]
   Post._formMap(Map<String, dynamic> map)
       : id = map['id'],
         forumId = map['fid'],
@@ -571,9 +633,9 @@ class Post implements PostBase {
         name = map['name'] ?? '无名氏',
         title = map['title'] ?? '无标题',
         content = map['content'],
-        isSage = (map['sage'] ?? 0) == 0 ? false : true,
-        isAdmin = (map['admin'] ?? 0) == 0 ? false : true,
-        isHidden = (map['Hide'] ?? 0) == 0 ? false : true;
+        isSage = (map['sage'] ?? 0) != 0,
+        isAdmin = (map['admin'] ?? 0) != 0,
+        isHidden = (map['Hide'] ?? 0) != 0;
 
   @override
   bool operator ==(Object other) =>
@@ -610,7 +672,9 @@ class Post implements PostBase {
       isHidden);
 }
 
+/// 版块里的串
 class ForumThread {
+  /// 主串
   final Post mainPost;
 
   /// 主串的最后的回复，最多5个。
@@ -619,10 +683,13 @@ class ForumThread {
   /// 而且[mainPost]的`replyCount`小于等于5时和[recentReplies]的长度也不一定相等。
   final List<Post> recentReplies;
 
+  /// 除去[recentReplies]外剩下的回复的数量
   final int? remainReplies;
 
+  /// 构造[ForumThread]
   const ForumThread(this.mainPost, this.recentReplies, [this.remainReplies]);
 
+  /// 从JSON数据构造[ForumThread]列表
   static List<ForumThread> _fromJson(String data) {
     final decoded = json.decode(data);
     _handleJsonError(decoded);
@@ -638,26 +705,18 @@ class ForumThread {
             forumThread['RemainReplies'])
     ];
   }
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      (other is ForumThread &&
-          mainPost == other.mainPost &&
-          recentReplies == other.recentReplies &&
-          remainReplies == other.remainReplies);
-
-  @override
-  int get hashCode => Object.hash(mainPost, recentReplies, remainReplies);
 }
 
+/// X岛匿名版官方tip，一部分是广告
 class Tip implements PostBase {
+  /// 串的ID，默认为`9999999`
   @override
   final int id;
 
   @override
   final String userHash;
 
+  /// 用户是否管理员（红名），默认是红名
   @override
   final bool isAdmin;
 
@@ -679,18 +738,23 @@ class Tip implements PostBase {
   @override
   final String name;
 
+  /// 串所在版块的ID，总是返回`null`
   @override
   int? get forumId => null;
 
+  /// 串的回串数量，总是返回`null`
   @override
   int? get replyCount => null;
 
+  /// 串是否sage，总是返回`null`
   @override
   bool? get isSage => null;
 
+  /// 串是否被隐藏，总是返回`null`
   @override
   bool? get isHidden => null;
 
+  /// 构造[Tip]
   const Tip(
       {this.id = 9999999,
       required this.userHash,
@@ -702,10 +766,11 @@ class Tip implements PostBase {
       this.imageExtension = '',
       this.name = '无名氏'});
 
+  /// 从map数据构造[Tip]
   Tip._fromMap(Map<String, dynamic> map)
       : id = map['id'] ?? 9999999,
         userHash = map['user_hash'] ?? '',
-        isAdmin = (map['admin'] ?? 1) == 0 ? false : true,
+        isAdmin = (map['admin'] ?? 1) != 0,
         title = map['title'] ?? '无标题',
         postTime = _parseTimeString(map['now'] ?? '2099-01-01 00:00:01'),
         content = map['content'] ?? '',
@@ -748,18 +813,24 @@ class Tip implements PostBase {
       isHidden);
 }
 
+/// 帖子（串）
 class Thread {
+  /// 主串
   final Post mainPost;
 
-  /// 主串某一页的回复。
+  /// 主串某一页的回复
   ///
-  /// [replies]长度为0时说明这一页和后面的页数都没有回复。
+  /// [replies]长度为0时可能这一页和后面的页数都没有回复，
+  /// 也有可能是因为这一页的回复都被删光
   final List<Post> replies;
 
+  /// 官方tip，随机出现
   final Tip? tip;
 
+  /// 构造[Thread]
   const Thread(this.mainPost, this.replies, [this.tip]);
 
+  /// 从JSON数据构造[Thread]
   static Thread _fromJson(String data) {
     final decoded = json.decode(data);
     _handleJsonError(decoded);
@@ -787,29 +858,23 @@ class Thread {
 
     return Thread(mainPost, replies, tip);
   }
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      (other is Thread &&
-          mainPost == other.mainPost &&
-          replies == other.replies &&
-          tip == other.tip);
-
-  @override
-  int get hashCode => Object.hash(mainPost, replies, tip);
 }
 
+/// 串引用的基础类型，其他串引用类型要继承[ReferenceBase]
 abstract class ReferenceBase implements PostBase {
+  /// 串所在版块的ID，总是返回`null`
   @override
   int? get forumId => null;
 
+  /// 串的回串数量，总是返回`null`
   @override
   int? get replyCount => null;
 
+  /// 串是否被隐藏，总是返回`null`
   @override
   bool? get isHidden => null;
 
+  /// 构造[ReferenceBase]
   const ReferenceBase();
 
   @override
@@ -835,6 +900,7 @@ abstract class ReferenceBase implements PostBase {
       name, title, content, isSage, isAdmin, forumId, replyCount, isHidden);
 }
 
+/// 串引用
 class Reference extends ReferenceBase {
   @override
   final int id;
@@ -869,6 +935,7 @@ class Reference extends ReferenceBase {
   @override
   final bool isAdmin;
 
+  /// 构造[Reference]
   const Reference(
       {required this.id,
       this.image = '',
@@ -882,6 +949,7 @@ class Reference extends ReferenceBase {
       this.status = 'n',
       this.isAdmin = false});
 
+  /// 从JSON数据构造[Reference]
   static Reference _fromJson(String data) {
     final decoded = json.decode(data);
     _handleJsonError(decoded);
@@ -894,9 +962,9 @@ class Reference extends ReferenceBase {
     final name = decoded['name'] ?? '无名氏';
     final title = decoded['title'] ?? '无标题';
     final content = decoded['content'];
-    final isSage = (decoded['sage'] ?? 0) == 0 ? false : true;
+    final isSage = (decoded['sage'] ?? 0) != 0;
     final status = decoded['status'] ?? 'n';
-    final isAdmin = (decoded['admin'] ?? 0) == 0 ? false : true;
+    final isAdmin = (decoded['admin'] ?? 0) != 0;
 
     return Reference(
         id: id,
@@ -949,6 +1017,7 @@ class Reference extends ReferenceBase {
       isHidden);
 }
 
+/// 网页版串引用
 class HtmlReference extends ReferenceBase {
   @override
   final int id;
@@ -977,11 +1046,14 @@ class HtmlReference extends ReferenceBase {
   @override
   final bool isAdmin;
 
+  /// 主串ID，目前只有引用串是主串才不是`null`
   final int? mainPostId;
 
+  /// 串是否sage，总是返回`null`
   @override
   bool? get isSage => null;
 
+  /// 构造[HtmlReference]
   const HtmlReference(
       {required this.id,
       this.image = '',
@@ -994,6 +1066,7 @@ class HtmlReference extends ReferenceBase {
       this.isAdmin = false,
       this.mainPostId});
 
+  /// 从HTML数据构造[HtmlReference]
   static HtmlReference _fromHtml(String data) {
     final document = parse(data);
     _handleDocument(document);
@@ -1133,10 +1206,12 @@ class HtmlReference extends ReferenceBase {
       isHidden);
 }
 
+/// 订阅
 class Feed implements PostBase {
   @override
   final int id;
 
+  /// 主串用户ID
   final int userId;
 
   @override
@@ -1145,10 +1220,13 @@ class Feed implements PostBase {
   @override
   final int replyCount;
 
+  /// 最近回复的串的ID，最多5个
   final List<int> recentReplies;
 
+  /// 总是空字符串
   final String category;
 
+  /// 图片的文件ID
   final int fileId;
 
   @override
@@ -1166,6 +1244,7 @@ class Feed implements PostBase {
   @override
   final String name;
 
+  /// 串的邮件
   final String email;
 
   @override
@@ -1183,11 +1262,14 @@ class Feed implements PostBase {
   @override
   final bool isHidden;
 
+  /// 总是空字符串
   final String po;
 
+  /// 串是否sage，总是返回`null`
   @override
   bool? get isSage => null;
 
+  /// 构造[Feed]
   const Feed(
       {required this.id,
       this.userId = 0,
@@ -1209,6 +1291,7 @@ class Feed implements PostBase {
       this.isHidden = false,
       this.po = ''});
 
+  /// 从JSON数据构造[Feed]
   static List<Feed> _fromJson(String data) {
     final decoded = json.decode(data);
     _handleJsonError(decoded);
@@ -1234,68 +1317,20 @@ class Feed implements PostBase {
             title: map['title'] ?? '',
             content: map['content'],
             status: map['status'] ?? 'n',
-            isAdmin:
-                (int.tryParse(map['admin'] ?? '0') ?? 0) == 0 ? false : true,
-            isHidden:
-                (int.tryParse(map['hide'] ?? '0') ?? 0) == 0 ? false : true,
+            isAdmin: (int.tryParse(map['admin'] ?? '0') ?? 0) != 0,
+            isHidden: (int.tryParse(map['hide'] ?? '0') ?? 0) != 0,
             po: map['po'] ?? '')
     ];
   }
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      (other is Feed &&
-          id == other.id &&
-          userId == other.userId &&
-          forumId == other.forumId &&
-          replyCount == other.replyCount &&
-          recentReplies == other.recentReplies &&
-          category == other.category &&
-          fileId == other.fileId &&
-          image == other.image &&
-          imageExtension == other.imageExtension &&
-          postTime == other.postTime &&
-          userHash == other.userHash &&
-          name == other.name &&
-          email == other.email &&
-          title == other.title &&
-          content == other.content &&
-          status == other.status &&
-          isAdmin == other.isAdmin &&
-          isHidden == other.isHidden &&
-          po == other.po &&
-          isSage == other.isSage);
-
-  @override
-  int get hashCode => Object.hash(
-      id,
-      userId,
-      forumId,
-      replyCount,
-      recentReplies,
-      category,
-      fileId,
-      image,
-      imageExtension,
-      postTime,
-      userHash,
-      name,
-      email,
-      title,
-      content,
-      status,
-      isAdmin,
-      isHidden,
-      po,
-      isSage);
 }
 
+/// 图片类型，目前X岛只支持`jpeg`、`png`、`gif`三种图片格式
 enum ImageType {
   jpeg,
   png,
   gif;
 
+  /// 图片类型的mine type
   String mineType() {
     switch (this) {
       case jpeg:
@@ -1307,6 +1342,7 @@ enum ImageType {
     }
   }
 
+  /// 从mine type构造[ImageType]
   static ImageType? fromMimeType(String mimeType) {
     switch (mimeType) {
       case 'image/jpeg':
@@ -1321,13 +1357,18 @@ enum ImageType {
   }
 }
 
+/// 图片
 class Image {
+  /// 图片名字
   final String filename;
 
+  /// 图片数据
   final List<int> data;
 
+  /// 图片类型
   late final ImageType imageType;
 
+  /// 构造[Image]
   Image(this.filename, this.data, [ImageType? imageType]) {
     if (imageType != null) {
       this.imageType = imageType;
@@ -1348,6 +1389,7 @@ class Image {
     }
   }
 
+  /// 读取图片文件，返回[Image]
   static Future<Image> fromFile(String path) async {
     final file = File(path);
     final filename = file.uri.pathSegments.last;
@@ -1355,20 +1397,11 @@ class Image {
 
     return Image(filename, data);
   }
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      (other is Image &&
-          filename == other.filename &&
-          data == other.data &&
-          imageType == other.imageType);
-
-  @override
-  int get hashCode => Object.hash(filename, data, imageType);
 }
 
+/// 颜文字
 class Emoticon {
+  /// X岛匿名版官方颜文字列表
   static const List<Emoticon> list = [
     Emoticon(name: '|∀ﾟ', text: '|∀ﾟ'),
     Emoticon(name: '(´ﾟДﾟ`)', text: '(´ﾟДﾟ`)'),
@@ -1476,10 +1509,13 @@ class Emoticon {
     Emoticon(name: '高级骰子', text: '[n,m]'),
   ];
 
+  /// 颜文字名称
   final String name;
 
+  /// 颜文字内容
   final String text;
 
+  /// 构造[Emoticon]
   const Emoticon({required this.name, required this.text});
 
   @override
@@ -1491,7 +1527,9 @@ class Emoticon {
   int get hashCode => Object.hash(name, text);
 }
 
+/// 举报理由
 class ReportReason {
+  /// X岛匿名版官方的举报理由
   static const List<ReportReason> list = [
     ReportReason(reason: '黄赌毒', text: '黄赌毒'),
     ReportReason(reason: '政治敏感', text: '政治敏感'),
@@ -1503,10 +1541,13 @@ class ReportReason {
     ReportReason(reason: '错饼自删', text: '错饼自删'),
   ];
 
+  /// 举报理由
   final String reason;
 
+  /// 举报理由的文字
   final String text;
 
+  /// 构造[ReportReason]
   const ReportReason({required this.reason, required this.text});
 
   @override
@@ -1518,31 +1559,48 @@ class ReportReason {
   int get hashCode => Object.hash(reason, text);
 }
 
+/// X岛匿名版API
 class XdnmbApi {
+  /// HTTP client
   final Client _client;
 
+  /// 用户饼干
   XdnmbCookie? xdnmbCookie;
 
+  /// 用户的cookie
   Cookie? xdnmbUserCookie;
 
+  /// 用户是否登陆
   bool get isLogin => xdnmbUserCookie != null;
 
+  /// 是否拥有PHP session ID
   bool get hasPhpSessionId => _client.xdnmbPhpSessionId != null;
 
+  /// 用户cookie的值
   String? get _userCookie => xdnmbUserCookie?.toCookie;
 
+  /// 构造[XdnmbApi]
+  ///
+  /// [userHash]为饼干[XdnmbCookie]的`userHash`
+  ///
+  /// [timeout]为连接超时时长，真实超时时长会是[timeout]加一秒
   XdnmbApi({String? userHash, Duration timeout = const Duration(seconds: 15)})
       : _client = Client(timeout: timeout),
         xdnmbCookie = userHash == null ? null : XdnmbCookie(userHash);
 
+  /// 更新X岛链接
   Future<void> updateUrls() => XdnmbUrls.update();
 
+  /// 获取X岛公告
   Future<Notice> getNotice() async {
     final response = await _client.xGet(XdnmbUrls.notice);
 
     return Notice._fromJson(response.utf8Body);
   }
 
+  /// 获取CDN列表
+  ///
+  /// [cookie]为饼干的cookie值
   Future<List<Cdn>> getCdnList({String? cookie}) async {
     final response =
         await _client.xGet(XdnmbUrls().cdnList, cookie ?? xdnmbCookie?.cookie);
@@ -1550,6 +1608,9 @@ class XdnmbApi {
     return Cdn._fromJson(response.utf8Body);
   }
 
+  /// 获取版块列表
+  ///
+  /// [cookie]为饼干的cookie值
   Future<ForumList> getForumList({String? cookie}) async {
     final response = await _client.xGet(
         XdnmbUrls().forumList, cookie ?? xdnmbCookie?.cookie);
@@ -1557,6 +1618,9 @@ class XdnmbApi {
     return ForumList._fromJson(response.utf8Body);
   }
 
+  /// 获取时间线列表
+  ///
+  /// [cookie]为饼干的cookie值
   Future<List<Timeline>> getTimelineList({String? cookie}) async {
     final response = await _client.xGet(
         XdnmbUrls().timelineList, cookie ?? xdnmbCookie?.cookie);
@@ -1564,9 +1628,12 @@ class XdnmbApi {
     return Timeline._fromJson(response.utf8Body);
   }
 
+  /// 获取网页版版块信息
+  ///
+  /// [forumId]为版块ID，[cookie]为饼干的cookie值
   Future<HtmlForum> getHtmlForumInfo(int forumId, {String? cookie}) async {
     if (forumId <= 0) {
-      throw XdnmbApiException('板块ID要大于0');
+      throw XdnmbApiException('版块ID要大于0');
     }
 
     final response = await _client.xGet(
@@ -1575,13 +1642,15 @@ class XdnmbApi {
     return HtmlForum._fromHtml(forumId, response.utf8Body);
   }
 
-  /// [page]最大为100。
+  /// 获取版块里的串
   ///
-  /// 一页最多20串。
+  /// [forumId]为版块ID，[page]为页数，最小值为1，最大值为100，[cookie]为饼干的cookie值
+  ///
+  /// 一页最多20串
   Future<List<ForumThread>> getForum(int forumId,
       {int page = 1, String? cookie}) async {
     if (forumId <= 0) {
-      throw XdnmbApiException('板块ID要大于0');
+      throw XdnmbApiException('版块ID要大于0');
     }
     if (page <= 0) {
       throw XdnmbApiException('页数要大于0');
@@ -1593,7 +1662,10 @@ class XdnmbApi {
     return ForumThread._fromJson(response.utf8Body);
   }
 
-  /// [page]最大值根据[Timeline.maxPage]。
+  /// 获取时间线里的串
+  ///
+  /// [timelineId]为时间线ID，[page]为页数，最小值为1，最大值根据[Timeline.maxPage]，
+  /// [cookie]为饼干的cookie值
   ///
   /// 一页最多20串。
   Future<List<ForumThread>> getTimeline(int timelineId,
@@ -1609,9 +1681,13 @@ class XdnmbApi {
     return ForumThread._fromJson(response.utf8Body);
   }
 
-  /// 一页最多19个回复。
+  /// 获取帖子（串）内容
   ///
-  /// 没有饼干的话只能浏览前100页。
+  /// [mainPostId]为主串ID，[page]为页数，最小值为1，[cookie]为饼干的cookie值
+  ///
+  /// 一页最多19个回复
+  ///
+  /// 没有饼干的话只能浏览前100页
   Future<Thread> getThread(int mainPostId,
       {int page = 1, String? cookie}) async {
     if (mainPostId <= 0) {
@@ -1628,7 +1704,13 @@ class XdnmbApi {
     return Thread._fromJson(response.utf8Body);
   }
 
-  /// 一页最多20个回复。
+  /// 获取只看Po的帖子（串）的内容
+  ///
+  /// [mainPostId]为主串ID，[page]为页数，最小值为1，[cookie]为饼干的cookie值
+  ///
+  /// 一页最多20个回复
+  ///
+  /// 没有饼干的话只能浏览前100页？
   Future<Thread> getOnlyPoThread(int mainPostId,
       {int page = 1, String? cookie}) async {
     if (mainPostId <= 0) {
@@ -1645,6 +1727,9 @@ class XdnmbApi {
     return Thread._fromJson(response.utf8Body);
   }
 
+  /// 获取串引用
+  ///
+  /// [postId]为串ID，[cookie]为饼干的cookie值
   Future<Reference> getReference(int postId, {String? cookie}) async {
     if (postId <= 0) {
       throw XdnmbApiException('串的ID要大于0');
@@ -1656,6 +1741,9 @@ class XdnmbApi {
     return Reference._fromJson(response.utf8Body);
   }
 
+  /// 获取网页版串引用
+  ///
+  /// [postId]为串ID，[cookie]为饼干的cookie值
   Future<HtmlReference> getHtmlReference(int postId, {String? cookie}) async {
     if (postId <= 0) {
       throw XdnmbApiException('串的ID要大于0');
@@ -1667,26 +1755,33 @@ class XdnmbApi {
     return HtmlReference._fromHtml(response.utf8Body);
   }
 
-  /// 最多10个
-  Future<List<Feed>> getFeed(String uuid,
+  /// 获取订阅
+  ///
+  /// [feedId]为订阅ID，[page]为页数，最小值为1，[cookie]为饼干的cookie值
+  ///
+  /// 一页最多10个订阅
+  Future<List<Feed>> getFeed(String feedId,
       {int page = 1, String? cookie}) async {
     if (page <= 0) {
       throw XdnmbApiException('页数要大于0');
     }
 
     final response = await _client.xGet(
-        XdnmbUrls().feed(uuid, page: page), cookie ?? xdnmbCookie?.cookie);
+        XdnmbUrls().feed(feedId, page: page), cookie ?? xdnmbCookie?.cookie);
 
     return Feed._fromJson(response.utf8Body);
   }
 
-  Future<void> addFeed(String uuid, int mainPostId, {String? cookie}) async {
+  /// 添加订阅
+  ///
+  /// [feedId]为订阅ID，[mainPostId]为主串ID，[cookie]为饼干的cookie值
+  Future<void> addFeed(String feedId, int mainPostId, {String? cookie}) async {
     if (mainPostId <= 0) {
       throw XdnmbApiException('主串ID要大于0');
     }
 
     final response = await _client.xGet(
-        XdnmbUrls().addFeed(uuid, mainPostId), cookie ?? xdnmbCookie?.cookie);
+        XdnmbUrls().addFeed(feedId, mainPostId), cookie ?? xdnmbCookie?.cookie);
     final String decoded = json.decode(response.utf8Body);
 
     if (!decoded.contains('订阅大成功')) {
@@ -1694,13 +1789,17 @@ class XdnmbApi {
     }
   }
 
-  Future<void> deleteFeed(String uuid, int mainPostId, {String? cookie}) async {
+  /// 删除订阅
+  ///
+  /// [feedId]为订阅ID，[mainPostId]为主串ID，[cookie]为饼干的cookie值
+  Future<void> deleteFeed(String feedId, int mainPostId,
+      {String? cookie}) async {
     if (mainPostId <= 0) {
       throw XdnmbApiException('主串ID要大于0');
     }
 
     final response = await _client.xGet(
-        XdnmbUrls().deleteFeed(uuid, mainPostId),
+        XdnmbUrls().deleteFeed(feedId, mainPostId),
         cookie ?? xdnmbCookie?.cookie);
     final String decoded = json.decode(response.utf8Body);
 
@@ -1709,14 +1808,21 @@ class XdnmbApi {
     }
   }
 
-  /// [email]其实没用
+  /// 发表新串
+  ///
+  /// [forumId]为版块ID，[content]为串的内容，[name]为串的名称，
+  /// [email]为串的邮箱，其实没用，[title]为串的标题，
+  /// [watermark]为是否添加图片水印，默认不添加，
+  /// [image]为串的图片，[cookie]为饼干的cookie值
+  ///
+  /// 发串需要饼干（[xdnmbCookie]或[cookie]）
   Future<void> postNewThread(
       {required int forumId,
       required String content,
       String? name,
       String? email,
       String? title,
-      bool? watermark,
+      bool watermark = false,
       Image? image,
       String? cookie}) async {
     cookie = cookie ?? xdnmbCookie?.cookie;
@@ -1724,7 +1830,7 @@ class XdnmbApi {
       throw XdnmbApiException('发串需要饼干');
     }
     if (forumId <= 0) {
-      throw XdnmbApiException('板块ID要大于0');
+      throw XdnmbApiException('版块ID要大于0');
     }
     if (content.isEmpty && image == null) {
       throw XdnmbApiException('不发图时串的内容不能为空');
@@ -1743,7 +1849,7 @@ class XdnmbApi {
       multipart.add('title', title);
     }
     // 要没水印的话必须没有'water'字段
-    if (watermark != null && watermark) {
+    if (watermark) {
       multipart.add('water', watermark);
     }
     if (image != null) {
@@ -1755,6 +1861,14 @@ class XdnmbApi {
     _handleHtml(response.utf8Body);
   }
 
+  /// 发表新串
+  ///
+  /// [forumId]为版块ID，[content]为串的内容，[name]为串的名称，
+  /// [email]为串的邮箱，其实没用，[title]为串的标题，
+  /// [watermark]为是否添加图片水印，默认不添加，
+  /// [imageFile]为图片文件路径，[cookie]为饼干的cookie值
+  ///
+  /// 发串需要饼干（[xdnmbCookie]或[cookie]）
   Future<void> postNewThreadWithImage(
           {required int forumId,
           required String content,
@@ -1762,7 +1876,7 @@ class XdnmbApi {
           String? name,
           String? email,
           String? title,
-          bool? watermark,
+          bool watermark = false,
           String? cookie}) async =>
       postNewThread(
           forumId: forumId,
@@ -1774,14 +1888,21 @@ class XdnmbApi {
           image: await Image.fromFile(imageFile),
           cookie: cookie);
 
-  /// [email]其实没用
+  /// 回串
+  ///
+  /// [mainPostId]为要回复的主串ID，[content]为串的内容，[name]为串的名称，
+  /// [email]为串的邮箱，其实没用，[title]为串的标题，
+  /// [watermark]为是否添加图片水印，默认不添加，
+  /// [image]为串的图片，[cookie]为饼干的cookie值
+  ///
+  /// 回串需要饼干（[xdnmbCookie]或[cookie]）
   Future<void> replyThread(
       {required int mainPostId,
       required String content,
       String? name,
       String? email,
       String? title,
-      bool? watermark,
+      bool watermark = false,
       Image? image,
       String? cookie}) async {
     cookie = cookie ?? xdnmbCookie?.cookie;
@@ -1808,7 +1929,7 @@ class XdnmbApi {
       multipart.add('title', title);
     }
     // 要没水印的话必须没有'water'字段
-    if (watermark != null && watermark) {
+    if (watermark) {
       multipart.add('water', watermark);
     }
     if (image != null) {
@@ -1820,6 +1941,14 @@ class XdnmbApi {
     _handleHtml(response.utf8Body);
   }
 
+  /// 回串
+  ///
+  /// [mainPostId]为要回复的主串ID，[content]为串的内容，[name]为串的名称，
+  /// [email]为串的邮箱，其实没用，[title]为串的标题，
+  /// [watermark]为是否添加图片水印，默认不添加，
+  /// [imageFile]为图片文件路径，[cookie]为饼干的cookie值
+  ///
+  /// 回串需要饼干（[xdnmbCookie]或[cookie]）
   Future<void> replyThreadWithImage(
           {required int mainPostId,
           required String content,
@@ -1827,7 +1956,7 @@ class XdnmbApi {
           String? name,
           String? email,
           String? title,
-          bool? watermark,
+          bool watermark = false,
           String? cookie}) async =>
       replyThread(
           mainPostId: mainPostId,
@@ -1839,13 +1968,16 @@ class XdnmbApi {
           image: await Image.fromFile(imageFile),
           cookie: cookie);
 
-  void close() {
-    _client.close();
-  }
+  /// 关闭HTTP client
+  void close() => _client.close();
 
+  /// 获取验证码图片
   Future<Uint8List> getVerifyImage() async =>
       (await _client.xGet(XdnmbUrls().verifyImage)).bodyBytes;
 
+  /// 用户登陆
+  ///
+  /// [email]为用户邮箱，[password]为用户密码，[verify]为验证码
   Future<void> userLogin(
       {required String email,
       required String password,
@@ -1872,6 +2004,11 @@ class XdnmbApi {
     xdnmbUserCookie = cookie;
   }
 
+  /// 获取饼干信息
+  ///
+  /// [cookieId]为饼干ID，[userCookie]为用户的cookie值
+  ///
+  /// 获取饼干信息需要用户已经登陆或[userCookie]
   Future<XdnmbCookie> getCookie(int cookieId, {String? userCookie}) async {
     userCookie = userCookie ?? _userCookie;
     if (userCookie == null) {
@@ -1901,6 +2038,11 @@ class XdnmbApi {
         id: cookieId);
   }
 
+  /// 获取饼干列表
+  ///
+  /// [userCookie]为用户的cookie值
+  ///
+  /// 获取饼干列表需要用户已经登陆或[userCookie]
   Future<CookiesList> getCookiesList({String? userCookie}) async {
     userCookie = userCookie ?? _userCookie;
     if (userCookie == null) {
@@ -1953,13 +2095,18 @@ class XdnmbApi {
       throw XdnmbApiException('获取饼干ID失败');
     }
 
-    return CookiesList._internal(
+    return CookiesList(
         canGetCookie: canGetCookie,
         currentCookiesNum: currentCookiesNum,
         totalCookiesNum: totalCookiesNum,
         cookiesIdList: idList.toList());
   }
 
+  /// 获取新饼干
+  ///
+  /// [verify]为验证码，[userCookie]为用户的cookie值
+  ///
+  /// 获取新饼干需要用户已经登陆或[userCookie]
   Future<void> getNewCookie(
       {required String verify, String? userCookie}) async {
     userCookie = userCookie ?? _userCookie;
@@ -1972,6 +2119,11 @@ class XdnmbApi {
     _handleHtml(response.utf8Body);
   }
 
+  /// 删除饼干
+  ///
+  /// [cookieId]为饼干ID，[verify]为验证码，[userCookie]为用户的cookie值
+  ///
+  /// 删除饼干需要用户已经登陆或[userCookie]
   Future<void> deleteCookie(
       {required int cookieId,
       required String verify,
@@ -1987,6 +2139,7 @@ class XdnmbApi {
   }
 }
 
+/// 处理HTTP响应里JSON数据里的错误
 void _handleJsonError(dynamic decoded) {
   if (decoded is String) {
     throw XdnmbApiException(decoded);
@@ -1996,6 +2149,7 @@ void _handleJsonError(dynamic decoded) {
   }
 }
 
+/// 处理HTML DOCUMENT数据
 String? _handleDocument(Document document) {
   final success = document.querySelector('p.success');
   if (success != null) {
@@ -2010,25 +2164,33 @@ String? _handleDocument(Document document) {
   return null;
 }
 
+/// 处理HTML数据
 String? _handleHtml(String data) => _handleDocument(parse(data));
 
-/// 返回UTC时间
+/// 解析串时间格式，返回UTC时间
 DateTime _parseTimeString(String timeString) {
   final time = timeString.replaceFirst(_RegExp._parseDay, 'T');
 
   return DateTime.parse('$time+0800');
 }
 
+/// 正则表达式
 abstract class _RegExp {
+  /// 提取日期
   static final RegExp _parseDay = RegExp(r'\(.*\)');
 
+  /// 提取饼干数量和饼干槽数量
   static final RegExp _cookieNum = RegExp(r'([0-9])/([0-9])');
 
+  /// 提取串号
   static final RegExp _parseNum = RegExp(r'[0-9]+');
 
+  /// 提取主串ID
   static final RegExp _parseMainPostId = RegExp(r't/([0-9]+)');
 
+  /// 提取图片链接
   static final RegExp _parseThumbImage = RegExp(r'thumb/([^\.]+)(\..*)?');
 
+  /// 提取用户饼干名字
   static final RegExp _parseUserHash = RegExp(r'ID:(.+)');
 }

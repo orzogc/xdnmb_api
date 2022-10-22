@@ -52,6 +52,7 @@ void main() async {
         expect(forum.name, isNotEmpty);
         expect(forum.message, isNotEmpty);
         expect(forum.interval, isPositive);
+        expect(forum.autoDelete, greaterThanOrEqualTo(0));
         expect(forum.threadCount, isPositive);
         expect(forum.permissionLevel, greaterThanOrEqualTo(0));
         expect(forum.forumFuseId, greaterThanOrEqualTo(0));
@@ -202,10 +203,10 @@ void main() async {
           throwsA(isA<XdnmbApiException>()));
     });
 
-    const uuid = '4aabbf60-d9be-475a-8276-c0b11d2535d2';
+    const feedId = '4aabbf60-d9be-475a-8276-c0b11d2535d2';
 
     test('getFeed() gets the feed', () async {
-      final feed = await xdnmb.getFeed(uuid);
+      final feed = await xdnmb.getFeed(feedId);
 
       for (final feedPost in feed) {
         expect(feedPost.id, isPositive);
@@ -233,14 +234,14 @@ void main() async {
     });
 
     test('addFeed() adds the main post to the feed', () async {
-      await xdnmb.addFeed(uuid, 50000002);
+      await xdnmb.addFeed(feedId, 50000002);
 
-      await expectLater(() async => await xdnmb.addFeed(uuid, 1),
+      await expectLater(() async => await xdnmb.addFeed(feedId, 1),
           throwsA(isA<XdnmbApiException>()));
     });
 
     test('deleteFeed() deletes the main post from the feed', () async {
-      await xdnmb.deleteFeed(uuid, 50000002);
+      await xdnmb.deleteFeed(feedId, 50000002);
     });
 
     test(

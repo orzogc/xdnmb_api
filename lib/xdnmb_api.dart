@@ -1,4 +1,4 @@
-/// API for nmbxd.com.
+/// [X岛匿名版](https://www.nmbxd.com/)API
 library xdnmb_api;
 
 export 'src/client.dart' show HttpStatusException;
