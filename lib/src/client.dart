@@ -22,32 +22,20 @@ class HttpStatusException implements Exception {
   /// 状态码
   final int statusCode;
 
-  /// HTTP响应体
-  final String? body;
-
   /// 构造[HttpStatusException]
-  const HttpStatusException(this.statusCode, [this.body]);
+  const HttpStatusException(this.statusCode);
 
   @override
-  String toString() {
-    var result =
-        "HttpStatusException: the HTTP response's status code is $statusCode";
-    if (body != null) {
-      result += ", the body is '$body'";
-    }
-
-    return result;
-  }
+  String toString() =>
+      "HttpStatusException: the HTTP response's status code is $statusCode";
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is HttpStatusException &&
-          statusCode == other.statusCode &&
-          body == other.body);
+      (other is HttpStatusException && statusCode == other.statusCode);
 
   @override
-  int get hashCode => Object.hash(statusCode, body);
+  int get hashCode => statusCode.hashCode;
 }
 
 /// multipart的实现
@@ -165,10 +153,6 @@ class Client extends IOClient {
 /// 检查HTTP状态码
 void _checkStatusCode(Response response) {
   if (response.statusCode != HttpStatus.ok) {
-    final body = response.utf8Body;
-    if (body.isEmpty) {
-      throw HttpStatusException(response.statusCode);
-    }
-    throw HttpStatusException(response.statusCode, body);
+    throw HttpStatusException(response.statusCode);
   }
 }

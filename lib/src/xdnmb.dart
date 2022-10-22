@@ -836,6 +836,8 @@ class Thread {
   /// 官方tip，随机出现
   final Tip? tip;
 
+  int? get maxPage => mainPost.maxPage;
+
   /// 构造[Thread]
   const Thread(this.mainPost, this.replies, [this.tip]);
 
