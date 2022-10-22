@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:html/dom.dart';
@@ -288,9 +289,11 @@ class Forum implements ForumBase {
   /// 总是'n'
   final String status;
 
-  /// 版块的最大页数，大于[maxPage]的均返回页数为[maxPage]的内容，版块的最大页数总是100
+  /// 版块的最大页数，大于[maxPage]的均返回页数为[maxPage]的内容，
+  /// 版块的最大页数的值最大为100
   @override
-  int get maxPage => 100;
+  int get maxPage =>
+      threadCount <= 0 ? (min((threadCount / 20).ceil(), 100)) : 1;
 
   /// 构造[Forum]
   const Forum(
@@ -822,10 +825,14 @@ class Thread {
   ///
   /// [replies]长度为0时可能这一页和后面的页数都没有回复，
   /// 也有可能是因为这一页的回复都被删光
+  ///
+  /// 通常一页最多19个回复
   final List<Post> replies;
 
   /// 官方tip，随机出现
   final Tip? tip;
+
+  int get maxPage => replies.isNotEmpty ? (replies.length / 19).ceil() : 1;
 
   /// 构造[Thread]
   const Thread(this.mainPost, this.replies, [this.tip]);
@@ -1708,7 +1715,7 @@ class XdnmbApi {
   ///
   /// [mainPostId]为主串ID，[page]为页数，最小值为1，[cookie]为饼干的cookie值
   ///
-  /// 一页最多20个回复
+  /// 一页最多19个回复
   ///
   /// 没有饼干的话只能浏览前100页？
   Future<Thread> getOnlyPoThread(int mainPostId,
