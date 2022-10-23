@@ -552,10 +552,6 @@ abstract class PostBase {
 
 /// [PostBase]的扩展
 extension BasePostExtension on PostBase {
-  int? get maxPage => replyCount != null
-      ? (replyCount! > 0 ? (replyCount! / 19).ceil() : 1)
-      : null;
-
   /// 串是否有图片
   bool hasImage() => image.isNotEmpty;
 
@@ -828,7 +824,7 @@ class Thread {
   /// 主串某一页的回复
   ///
   /// [replies]长度为0时可能这一页和后面的页数都没有回复，
-  /// 也有可能是因为这一页的回复都被删光
+  /// 也有可能是因为这一页的回复都被删光，可利用[maxPage]判断
   ///
   /// 通常一页最多19个回复
   final List<Post> replies;
@@ -836,7 +832,9 @@ class Thread {
   /// 官方tip，随机出现
   final Tip? tip;
 
-  int? get maxPage => mainPost.maxPage;
+  /// 可能的最大页数
+  int get maxPage =>
+      mainPost.replyCount > 0 ? (mainPost.replyCount / 19).ceil() : 1;
 
   /// 构造[Thread]
   const Thread(this.mainPost, this.replies, [this.tip]);
