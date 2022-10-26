@@ -1421,6 +1421,44 @@ class LastPost implements PostBase {
       return null;
     }
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is LastPost &&
+          id == other.id &&
+          mainPostId == other.mainPostId &&
+          postTime == other.postTime &&
+          userHash == other.userHash &&
+          name == other.name &&
+          email == other.email &&
+          title == other.title &&
+          content == other.content &&
+          isSage == other.isSage &&
+          isAdmin == other.isAdmin &&
+          forumId == other.forumId &&
+          replyCount == other.replyCount &&
+          image == other.image &&
+          imageExtension == other.imageExtension &&
+          isHidden == other.isHidden);
+
+  @override
+  int get hashCode => Object.hash(
+      id,
+      mainPostId,
+      postTime,
+      userHash,
+      name,
+      email,
+      title,
+      content,
+      isSage,
+      isAdmin,
+      forumId,
+      replyCount,
+      image,
+      imageExtension,
+      isHidden);
 }
 
 /// 图片类型，目前X岛只支持`jpeg`、`png`、`gif`三种图片格式
