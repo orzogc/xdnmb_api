@@ -263,6 +263,9 @@ void main() async {
 
       testNewPost(mainPost, threadContent, 'foo', 'baz');
 
+      LastPost? lastPost = await xdnmb.getLastPost();
+      testLastPost(lastPost!, null, threadContent, 'foo', 'bar', 'baz');
+
       await Future.delayed(Duration(seconds: 20));
       final postContent = getRandomString(20);
       await xdnmb.replyThreadWithImage(
@@ -285,6 +288,9 @@ void main() async {
       expect(mainPost.imageUrl(), isNotEmpty);
       expect(post.thumbImageUrl(), isNotEmpty);
       expect(post.imageUrl(), isNotEmpty);
+
+      lastPost = await xdnmb.getLastPost();
+      testLastPost(lastPost!, mainPost.id, postContent, 'foo', 'bar', 'baz');
     },
         skip: (xdnmb.xdnmbCookie == null || image == null)
             ? 'the environment variable XdnmbUserHash or XdnmbImage is not set'
@@ -358,6 +364,20 @@ void testNewPost(Post post, String content, String name, String title) {
   expect(post.isSage, isFalse);
   expect(post.isAdmin, isFalse);
   expect(post.isHidden, isFalse);
+}
+
+void testLastPost(LastPost post, int? mainPostId, String content, String name,
+    String email, String title) {
+  expect(post.id, isPositive);
+  expect(post.mainPostId, equals(mainPostId));
+  expect(post.postTime.toString(), isNotEmpty);
+  expect(post.userHash, isNotEmpty);
+  expect(post.name, equals(name));
+  expect(post.email, equals(email));
+  expect(post.title, equals(title));
+  expect(post.content, equals(content));
+  expect(post.isSage, isFalse);
+  expect(post.isAdmin, isFalse);
 }
 
 void testTip(Tip tip) {

@@ -1253,7 +1253,7 @@ class Feed implements PostBase {
   @override
   final String name;
 
-  /// 串的邮件
+  /// 串的邮箱
   final String email;
 
   @override
@@ -1330,6 +1330,96 @@ class Feed implements PostBase {
             isHidden: (int.tryParse(map['hide'] ?? '0') ?? 0) != 0,
             po: map['po'] ?? '')
     ];
+  }
+}
+
+/// 最新发的串
+class LastPost implements PostBase {
+  @override
+  final int id;
+
+  /// 主串ID，为`null`说明[LastPost]是主串
+  final int? mainPostId;
+
+  @override
+  final DateTime postTime;
+
+  @override
+  final String userHash;
+
+  @override
+  final String name;
+
+  /// 串的邮箱
+  final String email;
+
+  @override
+  final String title;
+
+  @override
+  final String content;
+
+  @override
+  final bool isSage;
+
+  @override
+  final bool isAdmin;
+
+  /// 串所在版块的ID，总是返回`null`
+  @override
+  int? get forumId => null;
+
+  /// 主串的回串数量，总是返回`null`
+  @override
+  int? get replyCount => null;
+
+  /// 图片，总是返回空字符串
+  @override
+  String get image => '';
+
+  /// 图片的扩展名，总是返回空字符串
+  @override
+  String get imageExtension => '';
+
+  /// 串是否被隐藏，总是返回`null`
+  @override
+  bool? get isHidden => null;
+
+  /// 构造[LastPost]
+  const LastPost(
+      {required this.id,
+      this.mainPostId,
+      required this.postTime,
+      required this.userHash,
+      this.name = '无名氏',
+      this.email = '',
+      this.title = '无标题',
+      required this.content,
+      this.isSage = false,
+      this.isAdmin = false});
+
+  /// 从JSON数据构造[LastPost]
+  static LastPost? _fromJson(String data) {
+    final decoded = json.decode(data);
+    _handleJsonError(decoded);
+
+    if (decoded is Map<String, dynamic>) {
+      final int? mainPostId = decoded['resto'];
+
+      return LastPost(
+          id: decoded['id'],
+          mainPostId: mainPostId != 0 ? mainPostId : null,
+          postTime: _parseTimeString(decoded['now']),
+          userHash: decoded['user_hash'],
+          name: decoded['name'] ?? '无名氏',
+          email: decoded['email'] ?? '',
+          title: decoded['title'] ?? '无标题',
+          content: decoded['content'],
+          isSage: (decoded['sage'] ?? 0) != 0,
+          isAdmin: (decoded['admin'] ?? 0) != 0);
+    } else {
+      return null;
+    }
   }
 }
 
@@ -1815,6 +1905,18 @@ class XdnmbApi {
     if (!decoded.contains('取消订阅成功')) {
       throw XdnmbApiException(decoded);
     }
+  }
+
+  /// 获取最新发的串
+  ///
+  /// 发新串后第一次调用会返回最新发的串，再次调用会返回`null`
+  ///
+  /// 没饼干会返回`null`
+  Future<LastPost?> getLastPost({String? cookie}) async {
+    final response = await _client.xGet(
+        XdnmbUrls().getLastPost, cookie ?? xdnmbCookie?.cookie);
+
+    return LastPost._fromJson(response.utf8Body);
   }
 
   /// 发表新串

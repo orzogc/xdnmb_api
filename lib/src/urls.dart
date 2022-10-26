@@ -33,6 +33,9 @@ class XdnmbUrls {
   /// 时间线列表链接
   String get timelineList => '${xdnmbBaseUrl}Api/getTimelineList';
 
+  /// 获取最新发的串的链接
+  String get getLastPost => '${xdnmbBaseUrl}Api/getLastPost';
+
   /// 发串链接
   String get postNewThread => '${xdnmbBaseUrl}Home/Forum/doPostThread.html';
 
