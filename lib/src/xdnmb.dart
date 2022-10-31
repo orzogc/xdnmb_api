@@ -1720,10 +1720,25 @@ class XdnmbApi {
   ///
   /// [userHash]为饼干[XdnmbCookie]的`userHash`
   ///
-  /// [timeout]为连接超时时长，真实超时时长会是[timeout]加一秒
-  XdnmbApi({String? userHash, Duration timeout = const Duration(seconds: 15)})
-      : _client = Client(timeout: timeout),
-        xdnmbCookie = userHash == null ? null : XdnmbCookie(userHash);
+  /// [client]为[HttpClient]
+  ///
+  /// [connectionTimeout]为连接超时时长，真实超时时长会是[connectionTimeout]加一秒，默认为15秒
+  ///
+  /// [idleTimeout]为连接空闲超时时长，默认为90秒
+  ///
+  /// [userAgent]为`User-Agent`，默认为`xdnmb`
+  XdnmbApi(
+      {String? userHash,
+      HttpClient? client,
+      Duration? connectionTimeout,
+      Duration? idleTimeout,
+      String? userAgent})
+      : _client = Client(
+            client: client,
+            connectionTimeout: connectionTimeout,
+            idleTimeout: idleTimeout,
+            userAgent: userAgent),
+        xdnmbCookie = userHash != null ? XdnmbCookie(userHash) : null;
 
   /// 更新X岛链接
   Future<void> updateUrls() => XdnmbUrls.update();

@@ -64,27 +64,40 @@ class Multipart extends MultipartRequest {
 
 /// HTTP client的实现
 class Client extends IOClient {
-  /// 连接空闲超时时长
-  static const Duration _idleTimeout = Duration(seconds: 90);
+  /// 默认连接超时时长
+  static const Duration _defaultConnectionTimeout = Duration(seconds: 15);
 
-  /// User-Agent
-  // TODO: 应该可修改
-  static const String _userAgent = 'xdnmb';
+  /// 默认连接空闲超时时长
+  static const Duration _defaultIdleTimeout = Duration(seconds: 90);
 
-  /// 连接超时时长
+  /// 默认`User-Agent`
+  static const String _defaultUserAgent = 'xdnmb';
+
+  /// 连接超时真实时长
   final Duration _timeout;
+
+  /// 连接空闲超时时长
+  final Duration? idleTimeout;
+
+  /// `User-Agent`
+  final String? userAgent;
 
   /// X岛的PHP session ID
   String? xdnmbPhpSessionId;
 
   /// 构造[Client]
   ///
-  /// [timeout]为连接超时时长，真实超时时长会是[timeout]加一秒
-  Client({Duration timeout = const Duration(seconds: 15)})
-      : _timeout = timeout + Duration(seconds: 1),
-        super(HttpClient()
-          ..connectionTimeout = timeout
-          ..idleTimeout = _idleTimeout);
+  /// [connectionTimeout]为连接超时时长，真实超时时长会是[connectionTimeout]加一秒
+  Client(
+      {HttpClient? client,
+      Duration? connectionTimeout,
+      this.idleTimeout,
+      this.userAgent})
+      : _timeout = connectionTimeout ??
+            _defaultConnectionTimeout + Duration(seconds: 1),
+        super((client ?? HttpClient())
+          ..connectionTimeout = connectionTimeout
+          ..idleTimeout = idleTimeout ?? _defaultIdleTimeout);
 
   /// 返回cookie头
   Map<String, String>? _cookieHeasers(String? cookie) =>
@@ -134,7 +147,8 @@ class Client extends IOClient {
   @override
   Future<IOStreamedResponse> send(BaseRequest request) async {
     // 添加User-Agent
-    request.headers[HttpHeaders.userAgentHeader] = _userAgent;
+    request.headers[HttpHeaders.userAgentHeader] =
+        userAgent ?? _defaultUserAgent;
     final response = await super.send(request).timeout(_timeout);
 
     // 获取xdnmbPhpSessionId
