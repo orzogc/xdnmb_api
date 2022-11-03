@@ -73,12 +73,6 @@ class Client extends IOClient {
   /// 默认`User-Agent`
   static const String _defaultUserAgent = 'xdnmb';
 
-  /// 连接超时真实时长
-  final Duration _timeout;
-
-  /// 连接空闲超时时长
-  final Duration? idleTimeout;
-
   /// `User-Agent`
   final String? userAgent;
 
@@ -87,16 +81,18 @@ class Client extends IOClient {
 
   /// 构造[Client]
   ///
-  /// [connectionTimeout]为连接超时时长，真实超时时长会是[connectionTimeout]加一秒
+  /// [client]为[HttpClient]
+  ///
+  /// [connectionTimeout]为连接超时时长，默认为15秒
+  ///
+  /// [idleTimeout]为连接空闲超时时长，默认为90秒
   Client(
       {HttpClient? client,
       Duration? connectionTimeout,
-      this.idleTimeout,
+      Duration? idleTimeout,
       this.userAgent})
-      : _timeout = connectionTimeout ??
-            _defaultConnectionTimeout + Duration(seconds: 1),
-        super((client ?? HttpClient())
-          ..connectionTimeout = connectionTimeout
+      : super((client ?? HttpClient())
+          ..connectionTimeout = connectionTimeout ?? _defaultConnectionTimeout
           ..idleTimeout = idleTimeout ?? _defaultIdleTimeout);
 
   /// 返回cookie头
@@ -149,7 +145,7 @@ class Client extends IOClient {
     // 添加User-Agent
     request.headers[HttpHeaders.userAgentHeader] =
         userAgent ?? _defaultUserAgent;
-    final response = await super.send(request).timeout(_timeout);
+    final response = await super.send(request);
 
     // 获取xdnmbPhpSessionId
     final setCookie = response.headers[HttpHeaders.setCookieHeader];

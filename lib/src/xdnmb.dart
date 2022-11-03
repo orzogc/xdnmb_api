@@ -1722,7 +1722,7 @@ class XdnmbApi {
   ///
   /// [client]为[HttpClient]
   ///
-  /// [connectionTimeout]为连接超时时长，真实超时时长会是[connectionTimeout]加一秒，默认为15秒
+  /// [connectionTimeout]为连接超时时长，默认为15秒
   ///
   /// [idleTimeout]为连接空闲超时时长，默认为90秒
   ///
