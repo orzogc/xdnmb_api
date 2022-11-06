@@ -1640,7 +1640,8 @@ class Emoticon {
     Emoticon(name: 'σ( ᑒ )', text: 'σ( ᑒ )'),
     Emoticon(name: '齐齐蛤尔', text: '(`ヮ´ )σ`∀´) ﾟ∀ﾟ)σ'),
     Emoticon(
-        name: '大嘘', text: '吁~~~~　　rnm，退钱！\n 　　　/　　　/ \n(　ﾟ 3ﾟ) `ー´) `д´) `д´)'),
+        name: '大嘘',
+        text: '吁~~~~　　rnm，退钱！\n 　　　/　　　/ \n(　ﾟ 3ﾟ) `ー´) `д´) `д´)\n'),
     Emoticon(name: '防剧透', text: '[h] [/h]'),
     Emoticon(name: '骰子', text: '[n]'),
     Emoticon(name: '高级骰子', text: '[n,m]'),

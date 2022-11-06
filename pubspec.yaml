@@ -1,9 +1,9 @@
 name: xdnmb_api
-description: API for nmbxd.com..
+description: API for nmbxd.com.
 version: 0.1.0
 
 environment:
-  sdk: '>=2.18.2 <3.0.0'
+  sdk: '>=2.18.4 <3.0.0'
 
 dependencies:
   html: ^0.15.1
