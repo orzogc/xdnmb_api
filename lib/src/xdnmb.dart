@@ -49,7 +49,7 @@ class Notice {
   const Notice(this.content, this.date, [this.isValid = true]);
 
   /// 从JSON数据构造[Notice]
-  static Notice _fromJson(String data) {
+  factory Notice._fromJson(String data) {
     final Map<String, dynamic> decoded = json.decode(data);
 
     final content = decoded['content'] ?? '';
@@ -383,7 +383,7 @@ class ForumList {
   const ForumList(this.forumGroupList, this.forumList, [this.timelineList]);
 
   /// 从JSON数据构造[ForumList]
-  static ForumList _fromJson(String data) {
+  factory ForumList._fromJson(String data) {
     final decoded = json.decode(data);
     _handleJsonError(decoded);
     final forumGroupList = <ForumGroup>[];
@@ -436,11 +436,11 @@ class HtmlForum implements ForumBase {
       {required this.id, required this.name, required this.message});
 
   /// 从HTML数据构造[HtmlForum]，[forumId]为版块ID
-  static HtmlForum _fromHtml(int forumId, String data) {
+  factory HtmlForum._fromHtml(int forumId, String data) {
     final document = parse(data);
     _handleDocument(document);
 
-    var element = document.querySelector('h2.h-title');
+    Element? element = document.querySelector('h2.h-title');
     if (element == null) {
       throw XdnmbApiException('没找到版块名字');
     }
@@ -840,7 +840,7 @@ class Thread {
   const Thread(this.mainPost, this.replies, [this.tip]);
 
   /// 从JSON数据构造[Thread]
-  static Thread _fromJson(String data) {
+  factory Thread._fromJson(String data) {
     final decoded = json.decode(data);
     _handleJsonError(decoded);
 
@@ -959,7 +959,7 @@ class Reference extends ReferenceBase {
       this.isAdmin = false});
 
   /// 从JSON数据构造[Reference]
-  static Reference _fromJson(String data) {
+  factory Reference._fromJson(String data) {
     final decoded = json.decode(data);
     _handleJsonError(decoded);
 
@@ -1076,11 +1076,11 @@ class HtmlReference extends ReferenceBase {
       this.mainPostId});
 
   /// 从HTML数据构造[HtmlReference]
-  static HtmlReference _fromHtml(String data) {
+  factory HtmlReference._fromHtml(String data) {
     final document = parse(data);
     _handleDocument(document);
 
-    var element = document.querySelector('a.h-threads-info-id');
+    Element? element = document.querySelector('a.h-threads-info-id');
     if (element == null) {
       throw XdnmbApiException('HtmlReference里没找到id');
     }
@@ -1300,7 +1300,7 @@ class Feed implements PostBase {
       this.isHidden = false,
       this.po = ''});
 
-  /// 从JSON数据构造[Feed]
+  /// 从JSON数据构造[Feed]列表
   static List<Feed> _fromJson(String data) {
     final decoded = json.decode(data);
     _handleJsonError(decoded);
@@ -2217,7 +2217,7 @@ class XdnmbApi {
     final document = parse(response.utf8Body);
     _handleDocument(document);
 
-    var element = document.querySelector('b.am-text-success');
+    Element? element = document.querySelector('b.am-text-success');
     late final bool canGetCookie;
     if (element == null) {
       element = document.querySelector('b.am-text-danger');

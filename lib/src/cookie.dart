@@ -3,10 +3,10 @@ part of 'xdnmb.dart';
 /// X岛饼干
 class XdnmbCookie {
   /// 饼干的userhash
-  late final String userHash;
+  final String userHash;
 
   /// 饼干显示的名字
-  late final String? name;
+  final String? name;
 
   /// 饼干ID
   final int? id;
@@ -15,14 +15,13 @@ class XdnmbCookie {
   String get cookie => 'userhash=$userHash';
 
   /// 构造[XdnmbCookie]
-  XdnmbCookie(this.userHash, {this.name, this.id});
+  const XdnmbCookie(this.userHash, {this.name, this.id});
 
   /// 从JSON数据构造[XdnmbCookie]
-  XdnmbCookie._fromJson(String data, {this.id}) {
+  factory XdnmbCookie._fromJson(String data, {int? id}) {
     final Map<String, dynamic> decoded = json.decode(data);
 
-    userHash = decoded['cookie'];
-    name = decoded['name'];
+    return XdnmbCookie(decoded['cookie'], name: decoded['name'], id: id);
   }
 
   @override

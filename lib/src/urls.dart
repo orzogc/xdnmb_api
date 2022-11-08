@@ -144,9 +144,10 @@ class XdnmbUrls {
     final client = HttpClient()..connectionTimeout = Duration(seconds: 10);
 
     try {
-      var request = await client.getUrl(Uri.parse(_xdnmbOriginUrl));
+      HttpClientRequest request =
+          await client.getUrl(Uri.parse(_xdnmbOriginUrl));
       request.followRedirects = false;
-      var response = await request.close();
+      HttpClientResponse response = await request.close();
       await response.drain();
 
       final baseUrl = response.isRedirect
@@ -159,10 +160,9 @@ class XdnmbUrls {
       final data = await response.transform(utf8.decoder).join();
       final decoded = json.decode(data);
 
-      var cdnUrl = originCdnUrl;
-      if (decoded is List<dynamic> && decoded.isNotEmpty) {
-        cdnUrl = decoded[0]['url'] ?? originCdnUrl;
-      }
+      final cdnUrl = (decoded is List<dynamic> && decoded.isNotEmpty)
+          ? (decoded[0]['url'] ?? originCdnUrl)
+          : originCdnUrl;
 
       _urls = XdnmbUrls._internal(baseUrl, cdnUrl);
 
