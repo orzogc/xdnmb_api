@@ -167,6 +167,8 @@ class XdnmbUrls {
       _urls = XdnmbUrls._internal(baseUrl, cdnUrl);
 
       return _urls;
+    } catch (e) {
+      rethrow;
     } finally {
       client.close();
     }
