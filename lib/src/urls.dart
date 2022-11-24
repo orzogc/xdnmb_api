@@ -4,10 +4,10 @@ import 'dart:io';
 /// X岛链接
 class XdnmbUrls {
   /// X岛初始链接
-  static const String _xdnmbOriginUrl = 'https://www.nmbxd.com/';
+  static const String originXdnmbUrl = 'https://www.nmbxd.com/';
 
   /// X岛现在的链接
-  static const String _xdnmbCurrentUrl = 'https://www.nmbxd1.com/';
+  static const String _currentXdnmbUrl = 'https://www.nmbxd1.com/';
 
   /// X岛CDN初始链接
   static const String originCdnUrl = 'https://image.nmb.best/';
@@ -16,7 +16,7 @@ class XdnmbUrls {
   static const String notice = 'https://nmb.ovear.info/nmb-notice.json';
 
   /// [XdnmbUrls]的单例
-  static XdnmbUrls _urls = XdnmbUrls._internal(_xdnmbCurrentUrl, originCdnUrl);
+  static XdnmbUrls _urls = XdnmbUrls._internal(_currentXdnmbUrl, originCdnUrl);
 
   /// X岛基础链接
   final String xdnmbBaseUrl;
@@ -145,15 +145,15 @@ class XdnmbUrls {
 
     try {
       HttpClientRequest request =
-          await client.getUrl(Uri.parse(_xdnmbOriginUrl));
+          await client.getUrl(Uri.parse(originXdnmbUrl));
       request.followRedirects = false;
       HttpClientResponse response = await request.close();
       await response.drain();
 
       final baseUrl = response.isRedirect
           ? (response.headers.value(HttpHeaders.locationHeader) ??
-              _xdnmbOriginUrl)
-          : _xdnmbOriginUrl;
+              originXdnmbUrl)
+          : originXdnmbUrl;
 
       request = await client.getUrl(Uri.parse('${baseUrl}Api/getCdnPath'));
       response = await request.close();
