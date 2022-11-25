@@ -93,9 +93,18 @@ class Cdn {
     final decoded = json.decode(data);
     _handleJsonError(decoded);
 
+    String getUrl(Map<String, dynamic> map) {
+      final url = map['url'];
+      if (url == null) {
+        throw XdnmbApiException('找不到url');
+      }
+
+      return url;
+    }
+
     return <Cdn>[
       for (final Map<String, dynamic> map in decoded)
-        Cdn(map['url'] ?? XdnmbUrls.originCdnUrl, map['rate'] ?? 0.0)
+        Cdn(getUrl(map), map['rate'] ?? 0.0)
     ];
   }
 
