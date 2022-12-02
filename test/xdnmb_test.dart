@@ -18,7 +18,7 @@ void main() async {
       final notice = await xdnmb.getNotice();
 
       expect(notice.content, isNotEmpty);
-      expect(notice.date, isPositive);
+      expect(notice.index, isPositive);
       expect(notice.isValid, isTrue);
     });
 

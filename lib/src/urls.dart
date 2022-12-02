@@ -3,6 +3,7 @@ import 'dart:io';
 
 /// X岛链接
 class XdnmbUrls {
+  /// X岛域名
   static const String xdnmbHost = 'www.nmbxd.com';
 
   /// X岛初始链接

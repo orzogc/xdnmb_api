@@ -9,7 +9,7 @@ dependencies:
   html: ^0.15.1
   http: ^0.13.5
   http_parser: ^4.0.2
-  mime: ^1.0.2
+  mime: ^1.0.3
 
 dev_dependencies:
   lints: ^2.0.1

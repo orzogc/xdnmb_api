@@ -39,24 +39,33 @@ class Notice {
   /// 公告内容
   final String content;
 
-  /// 公告发布的日期，部分格式未明
-  final int date;
+  /// 公告发布的日期，只有年月日
+  final DateTime date;
+
+  /// 公告索引
+  final int index;
 
   /// 公告是否有效
   final bool isValid;
 
   /// 构造[Notice]
-  const Notice(this.content, this.date, [this.isValid = true]);
+  const Notice(this.content, this.date, this.index, [this.isValid = true]);
 
   /// 从JSON数据构造[Notice]
   factory Notice._fromJson(String data) {
     final Map<String, dynamic> decoded = json.decode(data);
 
-    final content = decoded['content'] ?? '';
-    final date = decoded['date'] ?? 0;
-    final isValid = decoded['enable'] ?? false;
+    final String content = decoded['content'];
+    final String dateString = decoded['date'].toString();
+    final bool isValid = decoded['enable'] ?? false;
 
-    return Notice(content, date, isValid);
+    final date = DateTime(
+        int.parse(dateString.substring(0, 4)),
+        int.parse(dateString.substring(4, 6)),
+        int.parse(dateString.substring(6, 8)));
+    final index = int.parse(dateString.substring(8));
+
+    return Notice(content, date, index, isValid);
   }
 
   @override
@@ -65,10 +74,11 @@ class Notice {
       (other is Notice &&
           content == other.content &&
           date == other.date &&
+          index == other.index &&
           isValid == other.isValid);
 
   @override
-  int get hashCode => Object.hash(content, date, isValid);
+  int get hashCode => Object.hash(content, date, index, isValid);
 }
 
 /// X岛CDN
