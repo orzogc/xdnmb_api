@@ -469,7 +469,7 @@ class HtmlForum implements ForumBase {
     if (element == null) {
       throw XdnmbApiException('没找到版块信息');
     }
-    final message = element.innerHtml.trim();
+    final message = element.innerHtml._trimWhiteSpace();
 
     return HtmlForum(id: forumId, name: name, message: message);
   }
@@ -1182,7 +1182,7 @@ class HtmlReference extends ReferenceBase {
     if (element == null) {
       throw XdnmbApiException('HtmlReference里没找到content');
     }
-    final content = element.innerHtml.trim();
+    final content = element.innerHtml._trimWhiteSpace();
 
     return HtmlReference(
         id: id,
@@ -2377,4 +2377,53 @@ abstract class _RegExp {
 
   /// 提取用户饼干名字
   static final RegExp _parseUserHash = RegExp(r'ID:(.+)');
+}
+
+/// [String]的扩展
+///
+/// 代码来自 <https://github.com/dart-lang/sdk/blob/main/sdk/lib/_internal/vm/lib/string_patch.dart>
+extension _StringExtension on String {
+  /// 第一个非空格字符的位置
+  int _firstNonWhitespace() {
+    int first = 0;
+    for (; first < length; first++) {
+      final code = codeUnitAt(first);
+      if (code != 0x0A && code != 0x20) {
+        break;
+      }
+    }
+
+    return first;
+  }
+
+  /// 最后一个非空格字符的位置
+  int _lastNonWhitespace() {
+    int last = length - 1;
+    for (; last >= 0; last--) {
+      final code = codeUnitAt(last);
+      if (code != 0x0A && code != 0x20) {
+        break;
+      }
+    }
+
+    return last;
+  }
+
+  /// 去掉字符串前后两端的换行和空格（`U+000A`和`U+0020`）
+  String _trimWhiteSpace() {
+    int first = _firstNonWhitespace();
+    if (length == first) {
+      // String contains only whitespaces.
+      return "";
+    }
+
+    int last = _lastNonWhitespace() + 1;
+    if ((first == 0) && (last == length)) {
+      // Returns this string since it does not have leading or trailing
+      // whitespaces.
+      return this;
+    }
+
+    return substring(first, last);
+  }
 }
