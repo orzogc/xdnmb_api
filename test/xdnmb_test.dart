@@ -222,8 +222,8 @@ void main() async {
           expect(feedPost.imageExtension, isEmpty);
         } else {
           expect(feedPost.imageExtension, isNotEmpty);
-          expect(feedPost.thumbImageUrl(), isNotEmpty);
-          expect(feedPost.imageUrl(), isNotEmpty);
+          expect(feedPost.thumbImageUrl, isNotEmpty);
+          expect(feedPost.imageUrl, isNotEmpty);
         }
         expect(feedPost.postTime.toString(), isNotEmpty);
         expect(feedPost.userHash, isNotEmpty);
@@ -284,10 +284,10 @@ void main() async {
       testNewPost(post, postContent, 'foo', 'baz');
       expect(mainPost.image, isNot(equals(post.image)));
       expect(mainPost.imageExtension, equals(post.imageExtension));
-      expect(mainPost.thumbImageUrl(), isNotEmpty);
-      expect(mainPost.imageUrl(), isNotEmpty);
-      expect(post.thumbImageUrl(), isNotEmpty);
-      expect(post.imageUrl(), isNotEmpty);
+      expect(mainPost.thumbImageUrl, isNotEmpty);
+      expect(mainPost.imageUrl, isNotEmpty);
+      expect(post.thumbImageUrl, isNotEmpty);
+      expect(post.imageUrl, isNotEmpty);
 
       lastPost = await xdnmb.getLastPost();
       testLastPost(lastPost!, mainPost.id, postContent, 'foo', 'bar', 'baz');
@@ -306,8 +306,8 @@ void testPost(Post post, Matcher forumIdMatcher, Matcher replyCountMatcher) {
     expect(post.imageExtension, isEmpty);
   } else {
     expect(post.imageExtension, isNotEmpty);
-    expect(post.thumbImageUrl(), isNotEmpty);
-    expect(post.imageUrl(), isNotEmpty);
+    expect(post.thumbImageUrl, isNotEmpty);
+    expect(post.imageUrl, isNotEmpty);
   }
   expect(post.postTime.toString(), isNotEmpty);
   expect(post.userHash, isNotEmpty);
@@ -338,8 +338,8 @@ void testReference(ReferenceBase reference) {
     expect(reference.imageExtension, isEmpty);
   } else {
     expect(reference.imageExtension, isNotEmpty);
-    expect(reference.thumbImageUrl(), isNotEmpty);
-    expect(reference.imageUrl(), isNotEmpty);
+    expect(reference.thumbImageUrl, isNotEmpty);
+    expect(reference.imageUrl, isNotEmpty);
   }
   expect(reference.postTime.toString(), isNotEmpty);
   expect(reference.userHash, isNotEmpty);
@@ -354,8 +354,8 @@ void testNewPost(Post post, String content, String name, String title) {
   expect(post.replyCount, isZero);
   expect(post.image, isNotEmpty);
   expect(post.imageExtension, isNotEmpty);
-  expect(post.thumbImageUrl(), isNotEmpty);
-  expect(post.imageUrl(), isNotEmpty);
+  expect(post.thumbImageUrl, isNotEmpty);
+  expect(post.imageUrl, isNotEmpty);
   expect(post.postTime.toString(), isNotEmpty);
   expect(post.userHash, isNotEmpty);
   expect(post.name, equals(name));
@@ -391,8 +391,8 @@ void testTip(Tip tip) {
     expect(tip.imageExtension, isEmpty);
   } else {
     expect(tip.imageExtension, isNotEmpty);
-    expect(tip.thumbImageUrl(), isNotEmpty);
-    expect(tip.imageUrl(), isNotEmpty);
+    expect(tip.thumbImageUrl, isNotEmpty);
+    expect(tip.imageUrl, isNotEmpty);
   }
   expect(tip.name, equals('无名氏'));
 }

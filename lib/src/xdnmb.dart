@@ -93,10 +93,10 @@ class Cdn {
   const Cdn(this.url, [this.rate = 0.0]);
 
   /// 略缩图链接
-  String thumbImageUrl(PostBase post) => '${url}thumb/${post.imageFile()}';
+  String thumbImageUrl(PostBase post) => '${url}thumb/${post.imageFile}';
 
   /// 大图链接
-  String imageUrl(PostBase post) => '${url}image/${post.imageFile()}';
+  String imageUrl(PostBase post) => '${url}image/${post.imageFile}';
 
   /// 从JSON数据构造[Cdn]列表
   static List<Cdn> _fromJson(String data) {
@@ -312,7 +312,7 @@ class Forum implements ForumBase {
   /// 版块的最大页数的值最大为100
   @override
   int get maxPage =>
-      threadCount <= 0 ? (min((threadCount / 20).ceil(), 100)) : 1;
+      threadCount > 0 ? (min((threadCount / 20).ceil(), 100)) : 1;
 
   /// 构造[Forum]
   const Forum(
@@ -571,19 +571,26 @@ abstract class PostBase {
 
 /// [PostBase]的扩展
 extension BasePostExtension on PostBase {
+  /// 主串可能的最大页数
+  int? get maxPage => replyCount != null
+      ? replyCount! > 0
+          ? (replyCount! / 19).ceil()
+          : (replyCount! == 0 ? 1 : null)
+      : null;
+
   /// 串是否有图片
-  bool hasImage() => image.isNotEmpty;
+  bool get hasImage => image.isNotEmpty;
 
   /// 串图片名字
-  String? imageFile() => hasImage() ? '$image$imageExtension' : null;
+  String? get imageFile => hasImage ? '$image$imageExtension' : null;
 
   /// 串略缩图链接
-  String? thumbImageUrl() =>
-      hasImage() ? '${XdnmbUrls().cdnUrl}thumb/${imageFile()}' : null;
+  String? get thumbImageUrl =>
+      hasImage ? '${XdnmbUrls().cdnUrl}thumb/$imageFile' : null;
 
   /// 串大图链接
-  String? imageUrl() =>
-      hasImage() ? '${XdnmbUrls().cdnUrl}image/${imageFile()}' : null;
+  String? get imageUrl =>
+      hasImage ? '${XdnmbUrls().cdnUrl}image/$imageFile' : null;
 }
 
 /// 串
@@ -707,6 +714,10 @@ class ForumThread {
 
   /// 除去[recentReplies]外剩下的回复的数量
   final int? remainReplies;
+
+  /// 主串可能的最大页数
+  int get maxPage =>
+      mainPost.replyCount > 0 ? (mainPost.replyCount / 19).ceil() : 1;
 
   /// 构造[ForumThread]
   const ForumThread(this.mainPost, this.recentReplies, [this.remainReplies]);
@@ -851,7 +862,7 @@ class Thread {
   /// 官方tip，随机出现
   final Tip? tip;
 
-  /// 可能的最大页数
+  /// 主串可能的最大页数
   int get maxPage =>
       mainPost.replyCount > 0 ? (mainPost.replyCount / 19).ceil() : 1;
 
