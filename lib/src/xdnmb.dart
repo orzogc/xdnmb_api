@@ -488,6 +488,21 @@ class HtmlForum implements ForumBase {
   int get hashCode => Object.hash(id, name, displayName, message, maxPage);
 }
 
+/// 串的类型
+enum PostType {
+  /// 串
+  post,
+
+  /// X岛匿名版官方tip
+  tip,
+
+  /// 串引用
+  reference,
+
+  /// 其他类型
+  other,
+}
+
 /// 串的基本类型，其他串类型要实现[PostBase]
 abstract class PostBase {
   /// 串的ID
@@ -531,6 +546,9 @@ abstract class PostBase {
   /// 串是否被隐藏
   bool? get isHidden;
 
+  /// 串的类型
+  PostType get postType;
+
   /// 构造[PostBase]
   const PostBase();
 
@@ -550,7 +568,8 @@ abstract class PostBase {
           content == other.content &&
           isSage == other.isSage &&
           isAdmin == other.isAdmin &&
-          isHidden == other.isHidden);
+          isHidden == other.isHidden &&
+          postType == other.postType);
 
   @override
   int get hashCode => Object.hash(
@@ -566,7 +585,8 @@ abstract class PostBase {
       content,
       isSage,
       isAdmin,
-      isHidden);
+      isHidden,
+      postType);
 }
 
 /// [PostBase]的扩展
@@ -591,6 +611,18 @@ extension BasePostExtension on PostBase {
   /// 串大图链接
   String? get imageUrl =>
       hasImage ? '${XdnmbUrls().cdnUrl}image/$imageFile' : null;
+
+  /// 串是否串类型
+  bool get isPostType => postType == PostType.post;
+
+  /// 串是否tip类型
+  bool get isTipType => postType == PostType.tip;
+
+  /// 串是否引用类型
+  bool get isReferenceType => postType == PostType.reference;
+
+  /// 串是否其他类型
+  bool get isOtherType => postType == PostType.other;
 }
 
 /// 串
@@ -633,6 +665,9 @@ class Post implements PostBase {
 
   @override
   final bool isHidden;
+
+  @override
+  PostType get postType => PostType.post;
 
   /// 构造[Post]
   const Post(
@@ -682,7 +717,8 @@ class Post implements PostBase {
           content == other.content &&
           isSage == other.isSage &&
           isAdmin == other.isAdmin &&
-          isHidden == other.isHidden);
+          isHidden == other.isHidden &&
+          postType == other.postType);
 
   @override
   int get hashCode => Object.hash(
@@ -698,7 +734,8 @@ class Post implements PostBase {
       content,
       isSage,
       isAdmin,
-      isHidden);
+      isHidden,
+      postType);
 }
 
 /// 版块里的串
@@ -787,6 +824,9 @@ class Tip implements PostBase {
   @override
   bool? get isHidden => null;
 
+  @override
+  PostType get postType => PostType.tip;
+
   /// 构造[Tip]
   const Tip(
       {this.id = 9999999,
@@ -827,7 +867,8 @@ class Tip implements PostBase {
           forumId == other.forumId &&
           replyCount == other.replyCount &&
           isSage == other.isSage &&
-          isHidden == other.isHidden);
+          isHidden == other.isHidden &&
+          postType == other.postType);
 
   @override
   int get hashCode => Object.hash(
@@ -843,7 +884,8 @@ class Tip implements PostBase {
       forumId,
       replyCount,
       isSage,
-      isHidden);
+      isHidden,
+      postType);
 }
 
 /// 帖子（串）
@@ -913,6 +955,9 @@ abstract class ReferenceBase implements PostBase {
   @override
   bool? get isHidden => null;
 
+  @override
+  PostType get postType => PostType.reference;
+
   /// 构造[ReferenceBase]
   const ReferenceBase();
 
@@ -932,11 +977,25 @@ abstract class ReferenceBase implements PostBase {
           isAdmin == other.isAdmin &&
           forumId == other.forumId &&
           replyCount == other.replyCount &&
-          isHidden == other.isHidden);
+          isHidden == other.isHidden &&
+          postType == other.postType);
 
   @override
-  int get hashCode => Object.hash(id, image, imageExtension, postTime, userHash,
-      name, title, content, isSage, isAdmin, forumId, replyCount, isHidden);
+  int get hashCode => Object.hash(
+      id,
+      image,
+      imageExtension,
+      postTime,
+      userHash,
+      name,
+      title,
+      content,
+      isSage,
+      isAdmin,
+      forumId,
+      replyCount,
+      isHidden,
+      postType);
 }
 
 /// 串引用
@@ -1036,7 +1095,8 @@ class Reference extends ReferenceBase {
           isAdmin == other.isAdmin &&
           forumId == other.forumId &&
           replyCount == other.replyCount &&
-          isHidden == other.isHidden);
+          isHidden == other.isHidden &&
+          postType == other.postType);
 
   @override
   int get hashCode => Object.hash(
@@ -1053,7 +1113,8 @@ class Reference extends ReferenceBase {
       isAdmin,
       forumId,
       replyCount,
-      isHidden);
+      isHidden,
+      postType);
 }
 
 /// 网页版串引用
@@ -1225,7 +1286,8 @@ class HtmlReference extends ReferenceBase {
           isSage == other.isSage &&
           forumId == other.forumId &&
           replyCount == other.replyCount &&
-          isHidden == other.isHidden);
+          isHidden == other.isHidden &&
+          postType == other.postType);
 
   @override
   int get hashCode => Object.hash(
@@ -1242,7 +1304,8 @@ class HtmlReference extends ReferenceBase {
       isSage,
       forumId,
       replyCount,
-      isHidden);
+      isHidden,
+      postType);
 }
 
 /// 订阅
@@ -1307,6 +1370,9 @@ class Feed implements PostBase {
   /// 串是否sage，总是返回`null`
   @override
   bool? get isSage => null;
+
+  @override
+  PostType get postType => PostType.post;
 
   /// 构造[Feed]
   const Feed(
@@ -1415,6 +1481,9 @@ class LastPost implements PostBase {
   @override
   bool? get isHidden => null;
 
+  @override
+  PostType get postType => PostType.post;
+
   /// 构造[LastPost]
   const LastPost(
       {required this.id,
@@ -1470,7 +1539,8 @@ class LastPost implements PostBase {
           replyCount == other.replyCount &&
           image == other.image &&
           imageExtension == other.imageExtension &&
-          isHidden == other.isHidden);
+          isHidden == other.isHidden &&
+          postType == other.postType);
 
   @override
   int get hashCode => Object.hash(
@@ -1488,7 +1558,8 @@ class LastPost implements PostBase {
       replyCount,
       image,
       imageExtension,
-      isHidden);
+      isHidden,
+      postType);
 }
 
 /// 图片类型，目前X岛只支持`jpeg`、`png`、`gif`三种图片格式
