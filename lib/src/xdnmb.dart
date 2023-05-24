@@ -128,7 +128,7 @@ class Cdn {
 }
 
 /// 版块的基本类型，其他版块类型要实现[ForumBase]
-abstract class ForumBase {
+abstract interface class ForumBase {
   /// 版块ID
   int get id;
 
@@ -228,7 +228,7 @@ class ForumGroup {
   /// 版块组ID
   final int id;
 
-  /// 版块组显示的排序，小的在前面
+  /// 版块组显示的顺序，小的在前面
   final int sort;
 
   /// 版块组名字
@@ -269,7 +269,7 @@ class Forum implements ForumBase {
   /// 版块组ID
   final int forumGroupId;
 
-  /// 版块显示的排序，小的在前面
+  /// 版块显示的顺序，小的在前面
   final int sort;
 
   @override
@@ -458,14 +458,15 @@ class HtmlForum implements ForumBase {
   factory HtmlForum._fromHtml(int forumId, String data) {
     final document = parse(data);
     _handleDocument(document);
+    final parent = document.querySelector('div.uk-container');
 
-    Element? element = document.querySelector('h2.h-title');
+    Element? element = parent?.querySelector('h2.h-title');
     if (element == null) {
       throw XdnmbApiException('没找到版块名字');
     }
     final name = element.innerHtml;
 
-    element = document.querySelector('div.h-forum-header');
+    element = parent?.querySelector('div.h-forum-header');
     if (element == null) {
       throw XdnmbApiException('没找到版块信息');
     }
@@ -499,12 +500,30 @@ enum PostType {
   /// 串引用
   reference,
 
+  /// 订阅
+  feed,
+
   /// 其他类型
-  other,
+  other;
+
+  /// 是否串
+  bool get isPost => this == post;
+
+  /// 是否X岛匿名版官方tip
+  bool get isTip => this == tip;
+
+  /// 是否串引用
+  bool get isReference => this == reference;
+
+  /// 是否订阅
+  bool get isFeed => this == feed;
+
+  /// 是否其他类型
+  bool get isOther => this == other;
 }
 
 /// 串的基本类型，其他串类型要实现[PostBase]
-abstract class PostBase {
+abstract interface class PostBase {
   /// 串的ID
   int get id;
 
@@ -613,16 +632,19 @@ extension BasePostExtension on PostBase {
       hasImage ? '${XdnmbUrls().cdnUrl}image/$imageFile' : null;
 
   /// 串是否串类型
-  bool get isPostType => postType == PostType.post;
+  bool get isPostType => postType.isPost;
 
   /// 串是否tip类型
-  bool get isTipType => postType == PostType.tip;
+  bool get isTipType => postType.isTip;
 
   /// 串是否引用类型
-  bool get isReferenceType => postType == PostType.reference;
+  bool get isReferenceType => postType.isReference;
+
+  /// 串是否订阅类型
+  bool get isFeedType => postType.isFeed;
 
   /// 串是否其他类型
-  bool get isOtherType => postType == PostType.other;
+  bool get isOtherType => postType.isOther;
 }
 
 /// 串
@@ -1144,14 +1166,13 @@ class HtmlReference extends ReferenceBase {
   final String content;
 
   @override
+  final bool isSage;
+
+  @override
   final bool isAdmin;
 
   /// 主串ID，目前只有引用串是主串才不是`null`
   final int? mainPostId;
-
-  /// 串是否sage，总是返回`null`
-  @override
-  bool? get isSage => null;
 
   /// 构造[HtmlReference]
   const HtmlReference(
@@ -1163,6 +1184,7 @@ class HtmlReference extends ReferenceBase {
       this.name = '无名氏',
       this.title = '无标题',
       required this.content,
+      this.isSage = false,
       this.isAdmin = false,
       this.mainPostId});
 
@@ -1170,91 +1192,20 @@ class HtmlReference extends ReferenceBase {
   factory HtmlReference._fromHtml(String data) {
     final document = parse(data);
     _handleDocument(document);
-
-    Element? element = document.querySelector('a.h-threads-info-id');
-    if (element == null) {
-      throw XdnmbApiException('HtmlReference里没找到id');
-    }
-    final str = _RegExp._parseNum.stringMatch(element.innerHtml);
-    if (str == null) {
-      throw XdnmbApiException('该串不存在');
-    }
-    final id = int.parse(str);
-
-    int? mainPostId;
-    final href = element.attributes['href'];
-    if (href != null) {
-      final str = _RegExp._parseMainPostId.firstMatch(href)?[1];
-      if (str != null) {
-        mainPostId = int.parse(str);
-      } else {
-        mainPostId = null;
-      }
-    } else {
-      mainPostId = null;
+    final parent = document.querySelector('div.h-threads-item-reply-main');
+    if (parent == null) {
+      throw XdnmbApiException('HTML里没找到串引用');
     }
 
-    late final String image;
-    late final String imageExtension;
-    element = document.querySelector('img.h-threads-img');
-    if (element == null) {
-      image = '';
-      imageExtension = '';
-    } else {
-      final img = element.attributes['src'];
-      if (img == null) {
-        throw XdnmbApiException('HtmlReference里没找到image');
-      }
-      final match = _RegExp._parseThumbImage.firstMatch(img);
-      if (match == null) {
-        throw XdnmbApiException('HtmlReference里没找到image');
-      }
-      image = match[1]!;
-      imageExtension = match[2] ?? '';
-    }
-
-    element = document.querySelector('span.h-threads-info-createdat');
-    if (element == null) {
-      throw XdnmbApiException('HtmlReference里没找到postTime');
-    }
-    final postTime = _parseTimeString(element.innerHtml);
-
-    late final String userHash;
-    late final bool isAdmin;
-    element = document.querySelector('span.h-threads-info-uid');
-    if (element == null) {
-      throw XdnmbApiException('HtmlReference里没找到userHash');
-    }
-    final child = element.querySelector('font');
-    if (child != null) {
-      isAdmin = true;
-      userHash = child.innerHtml;
-    } else {
-      isAdmin = false;
-      final match = _RegExp._parseUserHash.firstMatch(element.innerHtml);
-      if (match == null) {
-        throw XdnmbApiException('HtmlReference里没找到userHash');
-      }
-      userHash = match[1]!;
-    }
-
-    element = document.querySelector('span.h-threads-info-email');
-    if (element == null) {
-      throw XdnmbApiException('HtmlReference里没找到name');
-    }
-    final name = element.innerHtml;
-
-    element = document.querySelector('span.h-threads-info-title');
-    if (element == null) {
-      throw XdnmbApiException('HtmlReference里没找到title');
-    }
-    final title = element.innerHtml;
-
-    element = document.querySelector('div.h-threads-content');
-    if (element == null) {
-      throw XdnmbApiException('HtmlReference里没找到content');
-    }
-    final content = element.innerHtml._trimWhiteSpace();
+    final (id, mainPostId) =
+        _getHtmlPostId(parent, returnMainPostId: true, idNotExist: '该串不存在');
+    final (image, imageExtension) = _getHtmlPostImage(parent);
+    final postTime = _getHtmlPostTime(parent);
+    final (userHash, isAdmin) = _getHtmlPostUserHash(parent);
+    final name = _getHtmlPostName(parent);
+    final title = _getHtmlPostTitle(parent);
+    final content = _getHtmlPostConent(parent);
+    final isSage = _getHtmlPostSage(parent);
 
     return HtmlReference(
         id: id,
@@ -1265,6 +1216,7 @@ class HtmlReference extends ReferenceBase {
         name: name,
         title: title,
         content: content,
+        isSage: isSage,
         isAdmin: isAdmin,
         mainPostId: mainPostId);
   }
@@ -1308,12 +1260,61 @@ class HtmlReference extends ReferenceBase {
       postType);
 }
 
+/// 订阅的基础类型，其他订阅类型要继承[FeedBase]
+abstract class FeedBase implements PostBase {
+  /// 串是否sage，总是返回`null`
+  @override
+  bool? get isSage => null;
+
+  @override
+  PostType get postType => PostType.feed;
+
+  /// 构造[FeedBase]
+  const FeedBase();
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is FeedBase &&
+          id == other.id &&
+          forumId == other.forumId &&
+          replyCount == other.replyCount &&
+          image == other.image &&
+          imageExtension == other.imageExtension &&
+          postTime == other.postTime &&
+          userHash == other.userHash &&
+          name == other.name &&
+          title == other.title &&
+          content == other.content &&
+          isSage == other.isSage &&
+          isAdmin == other.isAdmin &&
+          isHidden == other.isHidden &&
+          postType == other.postType);
+
+  @override
+  int get hashCode => Object.hash(
+      id,
+      forumId,
+      replyCount,
+      image,
+      imageExtension,
+      postTime,
+      userHash,
+      name,
+      title,
+      content,
+      isSage,
+      isAdmin,
+      isHidden,
+      postType);
+}
+
 /// 订阅
-class Feed implements PostBase {
+class Feed extends FeedBase {
   @override
   final int id;
 
-  /// 主串用户ID
+  /// 主串的用户ID
   final int userId;
 
   @override
@@ -1366,13 +1367,6 @@ class Feed implements PostBase {
 
   /// 总是空字符串
   final String po;
-
-  /// 串是否sage，总是返回`null`
-  @override
-  bool? get isSage => null;
-
-  @override
-  PostType get postType => PostType.post;
 
   /// 构造[Feed]
   const Feed(
@@ -1427,6 +1421,126 @@ class Feed implements PostBase {
             po: map['po'] ?? '')
     ];
   }
+}
+
+/// 网页版订阅
+class HtmlFeed extends FeedBase {
+  @override
+  final int id;
+
+  @override
+  final String image;
+
+  @override
+  final String imageExtension;
+
+  @override
+  final DateTime postTime;
+
+  @override
+  final String userHash;
+
+  @override
+  final String name;
+
+  @override
+  final String title;
+
+  @override
+  final String content;
+
+  @override
+  final bool isAdmin;
+
+  /// 串所在版块的ID，总是返回`null`
+  @override
+  int? get forumId => null;
+
+  /// 主串的回串数量，总是返回`null`
+  @override
+  int? get replyCount => null;
+
+  /// 串是否被隐藏，总是返回`null`
+  @override
+  bool? get isHidden => null;
+
+  /// 构造[HtmlFeed]
+  HtmlFeed(
+      {required this.id,
+      this.image = '',
+      this.imageExtension = '',
+      required this.postTime,
+      required this.userHash,
+      this.name = '无名氏',
+      this.title = '',
+      required this.content,
+      this.isAdmin = false});
+
+  /// 从HTML数据构造[HtmlFeed]列表
+  static List<HtmlFeed> _fromHtml(String data) {
+    final document = parse(data);
+    _handleDocument(document);
+
+    final feeds =
+        document.querySelectorAll('div.h-threads-item-main').map((parent) {
+      final (id, _) = _getHtmlPostId(parent);
+      final (image, imageExtension) = _getHtmlPostImage(parent);
+      final postTime = _getHtmlPostTime(parent);
+      final (userHash, isAdmin) = _getHtmlPostUserHash(parent);
+      final name = _getHtmlPostName(parent);
+      final title = _getHtmlPostTitle(parent);
+      final content = _getHtmlPostConent(parent);
+
+      return HtmlFeed(
+          id: id,
+          image: image,
+          imageExtension: imageExtension,
+          postTime: postTime,
+          userHash: userHash,
+          name: name,
+          title: title,
+          content: content,
+          isAdmin: isAdmin);
+    });
+
+    return feeds.toList();
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is HtmlFeed &&
+          id == other.id &&
+          forumId == other.forumId &&
+          replyCount == other.replyCount &&
+          image == other.image &&
+          imageExtension == other.imageExtension &&
+          postTime == other.postTime &&
+          userHash == other.userHash &&
+          name == other.name &&
+          title == other.title &&
+          content == other.content &&
+          isSage == other.isSage &&
+          isAdmin == other.isAdmin &&
+          isHidden == other.isHidden &&
+          postType == other.postType);
+
+  @override
+  int get hashCode => Object.hash(
+      id,
+      forumId,
+      replyCount,
+      image,
+      imageExtension,
+      postTime,
+      userHash,
+      name,
+      title,
+      content,
+      isSage,
+      isAdmin,
+      isHidden,
+      postType);
 }
 
 /// 最新发的串
@@ -2026,6 +2140,17 @@ class XdnmbApi {
     return Feed._fromJson(response.utf8Body);
   }
 
+  Future<List<HtmlFeed>> getHtmlFeed({int page = 1, String? cookie}) async {
+    if (page <= 0) {
+      throw XdnmbApiException('页数要大于0');
+    }
+
+    final response = await _client.xGet(
+        XdnmbUrls().htmlFeed(page: page), cookie ?? xdnmbCookie?.cookie);
+
+    return HtmlFeed._fromHtml(response.utf8Body);
+  }
+
   /// 添加订阅
   ///
   /// [feedId]为订阅ID，[mainPostId]为主串ID，[cookie]为饼干的cookie值
@@ -2317,11 +2442,12 @@ class XdnmbApi {
     final response = await _client.xGet(XdnmbUrls().cookiesList, userCookie);
     final document = parse(response.utf8Body);
     _handleDocument(document);
+    final parent = document.querySelector('div.am-g');
 
-    Element? element = document.querySelector('b.am-text-success');
+    Element? element = parent?.querySelector('b.am-text-success');
     late final bool canGetCookie;
     if (element == null) {
-      element = document.querySelector('b.am-text-danger');
+      element = parent?.querySelector('b.am-text-danger');
       if (element == null) {
         throw XdnmbApiException('获取饼干是否开放领取失败');
       } else if (element.innerHtml.contains('已关闭')) {
@@ -2335,7 +2461,7 @@ class XdnmbApi {
       throw XdnmbApiException('获取饼干是否开放领取失败');
     }
 
-    element = document.querySelector('b.am-text-primary');
+    element = parent?.querySelector('b.am-text-primary');
     if (element == null) {
       throw XdnmbApiException('获取饼干数量失败');
     }
@@ -2346,7 +2472,7 @@ class XdnmbApi {
     final currentCookiesNum = int.parse(match[1]!);
     final totalCookiesNum = int.parse(match[2]!);
 
-    final idList = document.querySelectorAll('tr td:first-child').map((e) {
+    final idList = parent!.querySelectorAll('tr td:first-child').map((e) {
       final next = e.nextElementSibling;
       if (next == null) {
         throw XdnmbApiException('获取饼干ID失败');
@@ -2509,3 +2635,120 @@ extension _StringExtension on String {
     return substring(first, last);
   }
 }
+
+(int, int?) _getHtmlPostId(Element parent,
+    {bool returnMainPostId = false, String? idNotExist}) {
+  final element = parent.querySelector('a.h-threads-info-id');
+  if (element == null) {
+    throw XdnmbApiException('HTML里没找到id');
+  }
+  final str = _RegExp._parseNum.stringMatch(element.innerHtml);
+  if (str == null) {
+    throw XdnmbApiException(idNotExist ?? 'HTML里没找到id');
+  }
+  final id = int.parse(str);
+
+  late final int? mainPostId;
+  if (returnMainPostId) {
+    final href = element.attributes['href'];
+    if (href != null) {
+      final str = _RegExp._parseMainPostId.firstMatch(href)?[1];
+      if (str != null) {
+        mainPostId = int.parse(str);
+      } else {
+        mainPostId = null;
+      }
+    } else {
+      mainPostId = null;
+    }
+  } else {
+    mainPostId = null;
+  }
+
+  return (id, mainPostId);
+}
+
+(String, String) _getHtmlPostImage(Element parent) {
+  late final String image;
+  late final String imageExtension;
+  final element = parent.querySelector('img.h-threads-img');
+  if (element == null) {
+    image = '';
+    imageExtension = '';
+  } else {
+    final img = element.attributes['src'];
+    if (img == null) {
+      throw XdnmbApiException('HTML没找到image');
+    }
+    final match = _RegExp._parseThumbImage.firstMatch(img);
+    if (match == null) {
+      throw XdnmbApiException('HTML里没找到image');
+    }
+    image = match[1]!;
+    imageExtension = match[2] ?? '';
+  }
+
+  return (image, imageExtension);
+}
+
+DateTime _getHtmlPostTime(Element parent) {
+  final element = parent.querySelector('span.h-threads-info-createdat');
+  if (element == null) {
+    throw XdnmbApiException('HTML里没找到postTime');
+  }
+
+  return _parseTimeString(element.innerHtml);
+}
+
+(String, bool) _getHtmlPostUserHash(Element parent) {
+  late final String userHash;
+  late final bool isAdmin;
+  final element = parent.querySelector('span.h-threads-info-uid');
+  if (element == null) {
+    throw XdnmbApiException('HTML里没找到userHash');
+  }
+  final child = element.querySelector('font');
+  if (child != null && child.attributes['color'] == 'red') {
+    isAdmin = true;
+    userHash = child.innerHtml;
+  } else {
+    isAdmin = false;
+    final match = _RegExp._parseUserHash.firstMatch(element.innerHtml);
+    if (match == null) {
+      throw XdnmbApiException('HTML里没找到userHash');
+    }
+    userHash = match[1]!;
+  }
+
+  return (userHash, isAdmin);
+}
+
+String _getHtmlPostName(Element parent) {
+  final element = parent.querySelector('span.h-threads-info-email');
+  if (element == null) {
+    throw XdnmbApiException('HTML里没找到name');
+  }
+
+  return element.innerHtml;
+}
+
+String _getHtmlPostTitle(Element parent) {
+  final element = parent.querySelector('span.h-threads-info-title');
+  if (element == null) {
+    throw XdnmbApiException('HTML里没找到title');
+  }
+
+  return element.innerHtml;
+}
+
+String _getHtmlPostConent(Element parent) {
+  final element = parent.querySelector('div.h-threads-content');
+  if (element == null) {
+    throw XdnmbApiException('HTML里没找到content');
+  }
+
+  return element.innerHtml._trimWhiteSpace();
+}
+
+bool _getHtmlPostSage(Element parent) =>
+    parent.querySelector('span.h-threads-tips') != null;

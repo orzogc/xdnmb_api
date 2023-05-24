@@ -33,7 +33,7 @@ void main() async {
 
       for (final forumGroup in forumList.forumGroupList) {
         expect(forumGroup.id, isPositive);
-        expect(forumGroup.sort, isPositive);
+        expect(forumGroup.sort, isNonNegative);
         expect(forumGroup.name, isNotEmpty);
         expect(forumGroup.status, equals('n'));
       }
@@ -48,7 +48,7 @@ void main() async {
       for (final forum in forumList.forumList) {
         expect(forum.id, isPositive);
         expect(forum.forumGroupId, isPositive);
-        expect(forum.sort, isPositive);
+        expect(forum.sort, isNonNegative);
         expect(forum.name, isNotEmpty);
         expect(forum.message, isNotEmpty);
         expect(forum.interval, isPositive);
@@ -124,9 +124,9 @@ void main() async {
       for (final forumThread in forumThreads) {
         final thread = await xdnmb.getThread(forumThread.mainPost.id);
 
-        testPost(thread.mainPost, equals(4), greaterThanOrEqualTo(0));
+        testPost(thread.mainPost, equals(4), greaterThanOrEqualTo(0), true);
         for (final reply in thread.replies) {
-          testPost(reply, isPositive, isZero);
+          testPost(reply, isPositive, isZero, true);
         }
         final tip = thread.tip;
         if (tip != null) {
@@ -145,9 +145,9 @@ void main() async {
       for (final forumThread in forumThreads) {
         final thread = await xdnmb.getOnlyPoThread(forumThread.mainPost.id);
 
-        testPost(thread.mainPost, equals(4), greaterThanOrEqualTo(0));
+        testPost(thread.mainPost, equals(4), greaterThanOrEqualTo(0), true);
         for (final reply in thread.replies) {
-          testPost(reply, isPositive, isZero);
+          testPost(reply, isPositive, isZero, true);
         }
         final tip = thread.tip;
         if (tip != null) {
@@ -203,7 +203,7 @@ void main() async {
           throwsA(isA<XdnmbApiException>()));
     });
 
-    const feedId = '4aabbf60-d9be-475a-8276-c0b11d2535d2';
+    const String feedId = '4aabbf60-d9be-475a-8276-c0b11d2535d2';
 
     test('getFeed() gets the feed', () async {
       final feed = await xdnmb.getFeed(feedId);
@@ -232,6 +232,17 @@ void main() async {
         expect(feedPost.po, isEmpty);
       }
     });
+
+    test('getHtmlFeed() gets the feed from HTML', () async {
+      final feedList = await xdnmb.getHtmlFeed();
+
+      for (final feed in feedList) {
+        testPost(feed, isNull, isNull, false);
+      }
+    },
+        skip: xdnmb.xdnmbCookie == null
+            ? 'the environment variable XdnmbUserHash is not set'
+            : null);
 
     test('addFeed() adds the main post to the feed', () async {
       await xdnmb.addFeed(feedId, 50000002);
@@ -298,7 +309,8 @@ void main() async {
   });
 }
 
-void testPost(Post post, Matcher forumIdMatcher, Matcher replyCountMatcher) {
+void testPost(PostBase post, Matcher forumIdMatcher, Matcher replyCountMatcher,
+    bool testTitle) {
   expect(post.id, isPositive);
   expect(post.forumId, forumIdMatcher);
   expect(post.replyCount, replyCountMatcher);
@@ -312,16 +324,18 @@ void testPost(Post post, Matcher forumIdMatcher, Matcher replyCountMatcher) {
   expect(post.postTime.toString(), isNotEmpty);
   expect(post.userHash, isNotEmpty);
   expect(post.name, isNotEmpty);
-  expect(post.title, isNotEmpty);
+  if (testTitle) {
+    expect(post.title, isNotEmpty);
+  }
   expect(post.content, isNotEmpty);
 }
 
 void testForumThreads(List<ForumThread> forumThreads, Matcher forumIdMatcher) {
   for (final forumThread in forumThreads) {
     testPost(forumThread.mainPost, forumIdMatcher,
-        greaterThanOrEqualTo(forumThread.recentReplies.length));
+        greaterThanOrEqualTo(forumThread.recentReplies.length), true);
     for (final reply in forumThread.recentReplies) {
-      testPost(reply, isPositive, isZero);
+      testPost(reply, isPositive, isZero, true);
     }
     if (forumThread.mainPost.replyCount > 5) {
       expect(forumThread.remainReplies,

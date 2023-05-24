@@ -1,8 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
 
+// 备用API host：https://www.nmbxd.com/Api/backupUrl
+
 /// X岛链接
-class XdnmbUrls {
+final class XdnmbUrls {
   /// X岛域名
   static const String xdnmbHost = 'www.nmbxd.com';
 
@@ -13,13 +15,14 @@ class XdnmbUrls {
   static const String _xdnmbCurrentUrl = 'https://www.nmbxd1.com/';
 
   /// X岛CDN初始链接
-  static const String _cdnOriginUrl = 'https://image.nmb.best/';
+  static const String _cdnCurrentUrl = 'https://image.nmb.best/';
 
   /// 公告链接
   static const String notice = 'https://nmb.ovear.info/nmb-notice.json';
 
   /// [XdnmbUrls]的单例
-  static XdnmbUrls _urls = XdnmbUrls._internal(_xdnmbCurrentUrl, _cdnOriginUrl);
+  static XdnmbUrls _urls =
+      XdnmbUrls._internal(_xdnmbCurrentUrl, _cdnCurrentUrl);
 
   /// X岛基础链接
   final String xdnmbBaseUrl;
@@ -118,6 +121,12 @@ class XdnmbUrls {
   String feed(String feedId, {int page = 1}) =>
       '${xdnmbBaseUrl}Api/feed?uuid=${Uri.encodeQueryComponent(feedId)}&page=$page';
 
+  /// 订阅链接
+  ///
+  /// [page]从1开始算起
+  String htmlFeed({int page = 1}) =>
+      '${xdnmbBaseUrl}Forum/feed/page/$page.html';
+
   /// 添加订阅的链接
   ///
   /// [feedId]为订阅ID，[mainPostId]为主串ID
@@ -164,8 +173,8 @@ class XdnmbUrls {
       final decoded = json.decode(data);
 
       final cdnUrl = (decoded is List<dynamic> && decoded.isNotEmpty)
-          ? (decoded[0]['url'] ?? _cdnOriginUrl)
-          : _cdnOriginUrl;
+          ? (decoded[0]['url'] ?? _cdnCurrentUrl)
+          : _cdnCurrentUrl;
 
       _urls = XdnmbUrls._internal(baseUrl, cdnUrl);
 
