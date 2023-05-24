@@ -101,7 +101,7 @@ void main() async {
 
       await expectLater(() async => await xdnmb.getForum(0),
           throwsA(isA<XdnmbApiException>()));
-    });
+    }, timeout: Timeout(Duration(minutes: 1)));
 
     test('getTimeline() gets timeline threads', () async {
       final timelineList = await xdnmb.getTimelineList();
@@ -234,11 +234,13 @@ void main() async {
     });
 
     test('getHtmlFeed() gets the feed from HTML', () async {
-      final feedList = await xdnmb.getHtmlFeed();
+      final (feedList, maxPage) = await xdnmb.getHtmlFeed();
 
       for (final feed in feedList) {
         testPost(feed, isNull, isNull, false);
       }
+
+      expect(maxPage, isPositive);
     },
         skip: xdnmb.xdnmbCookie == null
             ? 'the environment variable XdnmbUserHash is not set'

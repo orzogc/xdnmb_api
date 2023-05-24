@@ -1476,13 +1476,17 @@ class HtmlFeed extends FeedBase {
       required this.content,
       this.isAdmin = false});
 
-  /// 从HTML数据构造[HtmlFeed]列表
-  static List<HtmlFeed> _fromHtml(String data) {
+  /// 从HTML数据构造[HtmlFeed]列表，同时返回网页版订阅的最大页数
+  static (List<HtmlFeed>, int?) _fromHtml(String data) {
     final document = parse(data);
     _handleDocument(document);
+    final element = document.querySelector('div.h-threads-list');
+    if (element == null) {
+      throw XdnmbApiException('HTML里没找到订阅数据');
+    }
 
     final feeds =
-        document.querySelectorAll('div.h-threads-item-main').map((parent) {
+        element.querySelectorAll('div.h-threads-item-main').map((parent) {
       final (id, _) = _getHtmlPostId(parent);
       final (image, imageExtension) = _getHtmlPostImage(parent);
       final postTime = _getHtmlPostTime(parent);
@@ -1503,7 +1507,9 @@ class HtmlFeed extends FeedBase {
           isAdmin: isAdmin);
     });
 
-    return feeds.toList();
+    final maxPage = _getHtmlMaxPage(element);
+
+    return (feeds.toList(), maxPage);
   }
 
   @override
@@ -2140,7 +2146,17 @@ class XdnmbApi {
     return Feed._fromJson(response.utf8Body);
   }
 
-  Future<List<HtmlFeed>> getHtmlFeed({int page = 1, String? cookie}) async {
+  /// 获取网页版订阅
+  ///
+  /// [page]为页数，最小值为1，[cookie]为饼干的cookie值
+  ///
+  /// 返回[HtmlFeed]列表和网页版订阅的最大页数
+  ///
+  /// 最大页数最好不要用于判断有没有下一页
+  ///
+  /// 一页最多20个订阅
+  Future<(List<HtmlFeed>, int?)> getHtmlFeed(
+      {int page = 1, String? cookie}) async {
     if (page <= 0) {
       throw XdnmbApiException('页数要大于0');
     }
@@ -2585,6 +2601,9 @@ abstract class _RegExp {
 
   /// 提取用户饼干名字
   static final RegExp _parseUserHash = RegExp(r'ID:(.+)');
+
+  /// 提取网页的最大页数
+  static final RegExp _parsePageNum = RegExp(r'\/([0-9]+)\.html');
 }
 
 /// [String]的扩展
@@ -2636,6 +2655,7 @@ extension _StringExtension on String {
   }
 }
 
+/// 从HTML里获取串的ID和主串ID
 (int, int?) _getHtmlPostId(Element parent,
     {bool returnMainPostId = false, String? idNotExist}) {
   final element = parent.querySelector('a.h-threads-info-id');
@@ -2668,6 +2688,7 @@ extension _StringExtension on String {
   return (id, mainPostId);
 }
 
+/// 从HTML里获取串的图片
 (String, String) _getHtmlPostImage(Element parent) {
   late final String image;
   late final String imageExtension;
@@ -2691,6 +2712,7 @@ extension _StringExtension on String {
   return (image, imageExtension);
 }
 
+/// 从HTML里获取串的发串时间
 DateTime _getHtmlPostTime(Element parent) {
   final element = parent.querySelector('span.h-threads-info-createdat');
   if (element == null) {
@@ -2700,6 +2722,7 @@ DateTime _getHtmlPostTime(Element parent) {
   return _parseTimeString(element.innerHtml);
 }
 
+/// 从HTML里获取串用户的userhash和用户是否管理员（红名）
 (String, bool) _getHtmlPostUserHash(Element parent) {
   late final String userHash;
   late final bool isAdmin;
@@ -2723,6 +2746,7 @@ DateTime _getHtmlPostTime(Element parent) {
   return (userHash, isAdmin);
 }
 
+/// 从HTML里获取串的名称
 String _getHtmlPostName(Element parent) {
   final element = parent.querySelector('span.h-threads-info-email');
   if (element == null) {
@@ -2732,6 +2756,7 @@ String _getHtmlPostName(Element parent) {
   return element.innerHtml;
 }
 
+/// 从HTML里获取串的标题
 String _getHtmlPostTitle(Element parent) {
   final element = parent.querySelector('span.h-threads-info-title');
   if (element == null) {
@@ -2741,6 +2766,7 @@ String _getHtmlPostTitle(Element parent) {
   return element.innerHtml;
 }
 
+/// 从HTML里获取串的内容
 String _getHtmlPostConent(Element parent) {
   final element = parent.querySelector('div.h-threads-content');
   if (element == null) {
@@ -2750,5 +2776,42 @@ String _getHtmlPostConent(Element parent) {
   return element.innerHtml._trimWhiteSpace();
 }
 
+/// 从HTML里获取串是否被sage
 bool _getHtmlPostSage(Element parent) =>
     parent.querySelector('span.h-threads-tips') != null;
+
+/// 从HTML里获取串的最大页数
+int? _getHtmlMaxPage(Element parent) {
+  final element = parent.querySelector('ul.uk-pagination');
+  if (element == null) {
+    return null;
+  }
+
+  for (final child in element.children.reversed) {
+    if (child.localName != 'li' || child.children.isEmpty) {
+      continue;
+    }
+
+    final page = child.children.first;
+    final text = page.innerHtml;
+
+    if (text == '末页') {
+      final href = page.attributes['href'];
+      if (href != null) {
+        final str = _RegExp._parsePageNum.firstMatch(href)?[1];
+        if (str != null) {
+          return int.parse(str);
+        }
+      }
+
+      return null;
+    }
+
+    final n = int.tryParse(text);
+    if (n != null) {
+      return n;
+    }
+  }
+
+  return null;
+}
