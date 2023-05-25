@@ -121,7 +121,7 @@ final class XdnmbUrls {
   String feed(String feedId, {int page = 1}) =>
       '${xdnmbBaseUrl}Api/feed?uuid=${Uri.encodeQueryComponent(feedId)}&page=$page';
 
-  /// 订阅链接
+  /// 网页版订阅链接
   ///
   /// [page]从1开始算起
   String htmlFeed({int page = 1}) =>
@@ -133,11 +133,23 @@ final class XdnmbUrls {
   String addFeed(String feedId, int mainPostId) =>
       '${xdnmbBaseUrl}Api/addFeed?uuid=${Uri.encodeQueryComponent(feedId)}&tid=$mainPostId';
 
+  /// 网页版添加订阅的链接
+  ///
+  /// [mainPostId]为主串ID
+  String addHtmlFeed(int mainPostId) =>
+      '${xdnmbBaseUrl}Home/Forum/addFeed/tid/$mainPostId.html';
+
   /// 删除订阅的链接
   ///
   /// [feedId]为订阅ID，[mainPostId]为主串ID
   String deleteFeed(String feedId, int mainPostId) =>
       '${xdnmbBaseUrl}Api/delFeed?uuid=${Uri.encodeQueryComponent(feedId)}&tid=$mainPostId';
+
+  /// 网页版删除订阅的链接
+  ///
+  /// [mainPostId]为主串ID
+  String deleteHtmlFeed(int mainPostId) =>
+      '${xdnmbBaseUrl}Home/Forum/delFeed/tid/$mainPostId.html';
 
   /// 获取饼干的链接
   ///

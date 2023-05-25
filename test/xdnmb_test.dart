@@ -246,16 +246,36 @@ void main() async {
             ? 'the environment variable XdnmbUserHash is not set'
             : null);
 
+    const int feedMainPostId = 50000002;
+
     test('addFeed() adds the main post to the feed', () async {
-      await xdnmb.addFeed(feedId, 50000002);
+      await xdnmb.addFeed(feedId, feedMainPostId);
 
       await expectLater(() async => await xdnmb.addFeed(feedId, 1),
           throwsA(isA<XdnmbApiException>()));
     });
 
+    test('addHtmlFeed() adds the main post to the feed from HTML', () async {
+      await xdnmb.addHtmlFeed(feedMainPostId);
+
+      await expectLater(() async => await xdnmb.addHtmlFeed(1),
+          throwsA(isA<XdnmbApiException>()));
+    },
+        skip: xdnmb.xdnmbCookie == null
+            ? 'the environment variable XdnmbUserHash is not set'
+            : null);
+
     test('deleteFeed() deletes the main post from the feed', () async {
-      await xdnmb.deleteFeed(feedId, 50000002);
+      await xdnmb.deleteFeed(feedId, feedMainPostId);
     });
+
+    test('deleteHtmlFeed() deletes the main post from the feed from HTML',
+        () async {
+      await xdnmb.deleteHtmlFeed(feedMainPostId);
+    },
+        skip: xdnmb.xdnmbCookie == null
+            ? 'the environment variable XdnmbUserHash is not set'
+            : null);
 
     test(
         'postNewThread() posts a new thread and replyThread() replies a thread',

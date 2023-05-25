@@ -2184,6 +2184,19 @@ class XdnmbApi {
     }
   }
 
+  /// 网页版添加订阅
+  ///
+  /// [mainPostId]为主串ID，[cookie]为饼干的cookie值
+  Future<void> addHtmlFeed(int mainPostId, {String? cookie}) async {
+    if (mainPostId <= 0) {
+      throw XdnmbApiException('主串ID要大于0');
+    }
+
+    final response = await _client.xGet(
+        XdnmbUrls().addHtmlFeed(mainPostId), cookie ?? xdnmbCookie?.cookie);
+    _handleHtml(response.utf8Body);
+  }
+
   /// 删除订阅
   ///
   /// [feedId]为订阅ID，[mainPostId]为主串ID，[cookie]为饼干的cookie值
@@ -2201,6 +2214,19 @@ class XdnmbApi {
     if (!decoded.contains('取消订阅成功')) {
       throw XdnmbApiException(decoded);
     }
+  }
+
+  /// 网页版删除订阅
+  ///
+  /// [mainPostId]为主串ID，[cookie]为饼干的cookie值
+  Future<void> deleteHtmlFeed(int mainPostId, {String? cookie}) async {
+    if (mainPostId <= 0) {
+      throw XdnmbApiException('主串ID要大于0');
+    }
+
+    final response = await _client.xGet(
+        XdnmbUrls().deleteHtmlFeed(mainPostId), cookie ?? xdnmbCookie?.cookie);
+    _handleHtml(response.utf8Body);
   }
 
   /// 获取最新发的串
