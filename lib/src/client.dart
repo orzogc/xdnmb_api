@@ -1,10 +1,11 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:http/http.dart';
+import 'package:http/http.dart' hide Client;
 import 'package:http/io_client.dart';
 import 'package:http_parser/http_parser.dart';
 
+import 'urls.dart';
 import 'xdnmb.dart';
 
 /// 将cookie列表转化为cookie值
@@ -43,7 +44,7 @@ class Multipart extends MultipartRequest {
   /// 构造[Multipart]
   ///
   /// [url]为请求链接
-  Multipart(String url) : super('POST', Uri.parse(url));
+  Multipart(Uri url) : super('POST', url);
 
   /// 添加字段，值为[value]的字符串表达
   void add(String field, Object value) => fields[field] = value.toString();
@@ -65,7 +66,7 @@ class Multipart extends MultipartRequest {
 /// HTTP client的实现
 class Client extends IOClient {
   /// 默认连接超时时长
-  static const Duration _defaultConnectionTimeout = Duration(seconds: 15);
+  static const Duration defaultConnectionTimeout = Duration(seconds: 15);
 
   /// 默认连接空闲超时时长
   static const Duration _defaultIdleTimeout = Duration(seconds: 90);
@@ -73,11 +74,11 @@ class Client extends IOClient {
   /// 默认`User-Agent`
   static const String _defaultUserAgent = 'xdnmb';
 
-  /// `User-Agent`
-  final String? userAgent;
-
   /// X岛的PHP session ID
   String? xdnmbPhpSessionId;
+
+  /// X岛备用API的PHP session ID
+  String? _xdnmbBackupApiPhpSessionId;
 
   /// 构造[Client]
   ///
@@ -90,36 +91,48 @@ class Client extends IOClient {
       {HttpClient? client,
       Duration? connectionTimeout,
       Duration? idleTimeout,
-      this.userAgent})
+      String? userAgent})
       : super((client ?? HttpClient())
-          ..connectionTimeout = connectionTimeout ?? _defaultConnectionTimeout
-          ..idleTimeout = idleTimeout ?? _defaultIdleTimeout);
+          ..connectionTimeout = connectionTimeout ?? defaultConnectionTimeout
+          ..idleTimeout = idleTimeout ?? _defaultIdleTimeout
+          ..userAgent = userAgent ?? _defaultUserAgent);
+
+  /// [xdnmbPhpSessionId]有效
+  bool _xdnmbPhpSessionIdIsValid(Uri url) =>
+      xdnmbPhpSessionId != null && XdnmbUrls().isBaseUrl(url);
+
+  /// [_xdnmbBackupApiPhpSessionId]有效
+  bool _xdnmbBackupApiPhpSessionIdIsValid(Uri url) =>
+      _xdnmbBackupApiPhpSessionId != null && XdnmbUrls().isBackupApiUrl(url);
 
   /// 返回cookie头
-  Map<String, String>? _cookieHeasers(String? cookie) =>
-      (cookie != null || xdnmbPhpSessionId != null)
+  Map<String, String>? _cookieHeasers(Uri url, String? cookie) =>
+      (cookie != null ||
+              _xdnmbPhpSessionIdIsValid(url) ||
+              _xdnmbBackupApiPhpSessionIdIsValid(url))
           ? {
               HttpHeaders.cookieHeader: _toCookies([
                 if (cookie != null) cookie,
-                if (xdnmbPhpSessionId != null) xdnmbPhpSessionId!,
+                if (_xdnmbPhpSessionIdIsValid(url)) xdnmbPhpSessionId!,
+                if (_xdnmbBackupApiPhpSessionIdIsValid(url))
+                  _xdnmbBackupApiPhpSessionId!,
               ])
             }
           : null;
 
   /// GET请求
-  Future<Response> xGet(String url, [String? cookie]) async {
-    final response =
-        await this.get(Uri.parse(url), headers: _cookieHeasers(cookie));
+  Future<Response> xGet(Uri url, [String? cookie]) async {
+    final response = await this.get(url, headers: _cookieHeasers(url, cookie));
     _checkStatusCode(response);
 
     return response;
   }
 
   /// POST form请求
-  Future<Response> xPostForm(String url, Map<String, String>? form,
+  Future<Response> xPostForm(Uri url, Map<String, String>? form,
       [String? cookie]) async {
-    final response = await this
-        .post(Uri.parse(url), headers: _cookieHeasers(cookie), body: form);
+    final response =
+        await this.post(url, headers: _cookieHeasers(url, cookie), body: form);
     _checkStatusCode(response);
 
     return response;
@@ -127,10 +140,14 @@ class Client extends IOClient {
 
   /// POST multipart请求
   Future<Response> xPostMultipart(Multipart multipart, [String? cookie]) async {
-    if (cookie != null || xdnmbPhpSessionId != null) {
+    if (cookie != null ||
+        _xdnmbPhpSessionIdIsValid(multipart.url) ||
+        _xdnmbBackupApiPhpSessionIdIsValid(multipart.url)) {
       multipart.headers[HttpHeaders.cookieHeader] = _toCookies([
         if (cookie != null) cookie,
-        if (xdnmbPhpSessionId != null) xdnmbPhpSessionId!,
+        if (_xdnmbPhpSessionIdIsValid(multipart.url)) xdnmbPhpSessionId!,
+        if (_xdnmbBackupApiPhpSessionIdIsValid(multipart.url))
+          _xdnmbBackupApiPhpSessionId!,
       ]);
     }
     final streamedResponse = await send(multipart);
@@ -142,17 +159,26 @@ class Client extends IOClient {
 
   @override
   Future<IOStreamedResponse> send(BaseRequest request) async {
-    // 添加User-Agent
-    request.headers[HttpHeaders.userAgentHeader] =
-        userAgent ?? _defaultUserAgent;
     final response = await super.send(request);
 
-    // 获取xdnmbPhpSessionId
+    // 获取xdnmbPhpSessionId和_xdnmbBackupApiPhpSessionId
     final setCookie = response.headers[HttpHeaders.setCookieHeader];
     if (setCookie != null) {
-      final cookie = Cookie.fromSetCookieValue(setCookie);
-      if (cookie.name == 'PHPSESSID') {
-        xdnmbPhpSessionId = cookie.toCookie;
+      final cookies = setCookie.split(RegExp(r',(?! )'));
+      for (final c in cookies) {
+        try {
+          final cookie = Cookie.fromSetCookieValue(c);
+          if (cookie.name == 'PHPSESSID') {
+            final urls = XdnmbUrls();
+            if (urls.isBaseUrl(request.url)) {
+              xdnmbPhpSessionId = cookie.toCookie;
+            } else if (urls.isBackupApiUrl(request.url)) {
+              _xdnmbBackupApiPhpSessionId = cookie.toCookie;
+            }
+          }
+        } catch (e) {
+          print('解析set-cookie出现错误：$e');
+        }
       }
     }
 

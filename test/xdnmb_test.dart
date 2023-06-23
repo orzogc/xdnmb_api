@@ -4,6 +4,10 @@ import 'dart:math';
 import 'package:test/test.dart';
 import 'package:xdnmb_api/src/xdnmb.dart';
 
+const bool _useHttps = false;
+
+const bool _useBackupApi = true;
+
 void main() async {
   group('XdnmbApi', () {
     final userHash = Platform.environment['XdnmbUserHash'];
@@ -11,7 +15,9 @@ void main() async {
     final image = Platform.environment['XdnmbImage'];
 
     test('updateUrls() updates URLs', () async {
-      await xdnmb.updateUrls();
+      await xdnmb.updateUrls(_useHttps);
+      xdnmb.useHttps(_useHttps);
+      xdnmb.useBackupApi(_useBackupApi);
     });
 
     test('getNotice() gets the notice', () async {

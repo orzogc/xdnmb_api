@@ -624,12 +624,14 @@ extension BasePostExtension on PostBase {
   String? get imageFile => hasImage ? '$image$imageExtension' : null;
 
   /// 串略缩图链接
-  String? get thumbImageUrl =>
-      hasImage ? '${XdnmbUrls().cdnUrl}thumb/$imageFile' : null;
+  String? get thumbImageUrl => hasImage
+      ? XdnmbUrls().cdnUrl.replace(path: 'thumb/$imageFile').toString()
+      : null;
 
   /// 串大图链接
-  String? get imageUrl =>
-      hasImage ? '${XdnmbUrls().cdnUrl}image/$imageFile' : null;
+  String? get imageUrl => hasImage
+      ? XdnmbUrls().cdnUrl.replace(path: 'image/$imageFile').toString()
+      : null;
 
   /// 串是否串类型
   bool get isPostType => postType.isPost;
@@ -1963,11 +1965,21 @@ class XdnmbApi {
         xdnmbCookie = userHash != null ? XdnmbCookie(userHash) : null;
 
   /// 更新X岛链接
-  Future<void> updateUrls() => XdnmbUrls.update();
+  ///
+  /// [useHttps]为是否使用HTTPS
+  Future<void> updateUrls([bool useHttps = true]) =>
+      XdnmbUrls.update(client: _client, useHttps: useHttps);
+
+  /// 是否使用HTTPS，默认使用
+  void useHttps(bool useHttps) => XdnmbUrls().useHttps = useHttps;
+
+  /// 是否使用备用API链接，默认不使用
+  void useBackupApi(bool useBackupApi) =>
+      XdnmbUrls().useBackupApi = useBackupApi;
 
   /// 获取X岛公告
   Future<Notice> getNotice() async {
-    final response = await _client.xGet(XdnmbUrls.notice);
+    final response = await _client.xGet(XdnmbUrls().notice);
 
     return Notice._fromJson(response.utf8Body);
   }
