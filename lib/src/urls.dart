@@ -6,19 +6,6 @@ import 'package:http/io_client.dart';
 
 import 'client.dart';
 
-/// HTTPS scheme
-const String _httpsScheme = 'https';
-
-/// HTTP scheme
-const String _httpScheme = 'http';
-
-/// [Uri]的扩展
-extension _UriExtension on Uri {
-  /// 转化链接为HTTPS或者HTTP
-  Uri useHttps(bool useHttps) =>
-      useHttps ? replace(scheme: _httpsScheme) : replace(scheme: _httpScheme);
-}
-
 /// X岛链接
 final class XdnmbUrls {
   /// X岛域名
@@ -43,8 +30,7 @@ final class XdnmbUrls {
   static final Uri _currentBackupApiUrl = Uri.parse('https://api.nmb.best/');
 
   /// X岛公告链接
-  static final Uri _notice =
-      Uri.parse('https://nmb.ovear.info/nmb-notice.json');
+  static final Uri notice = Uri.parse('https://nmb.ovear.info/nmb-notice.json');
 
   /// [XdnmbUrls]的单例
   static XdnmbUrls _urls = XdnmbUrls._internal(
@@ -53,40 +39,25 @@ final class XdnmbUrls {
       backupApiUrl: _currentBackupApiUrl);
 
   /// X岛基础链接
-  final Uri _baseUrl;
+  final Uri baseUrl;
 
   /// X岛CDN链接
-  final Uri _cdnUrl;
+  final Uri cdnUrl;
 
   /// X岛备用API链接
-  final Uri _backupApiUrl;
-
-  /// 是否使用HTTPS，默认使用
-  bool useHttps = true;
+  final Uri backupApiUrl;
 
   /// 是否使用备用API链接，默认不使用
   bool useBackupApi = false;
 
-  /// X岛基础链接
-  Uri get baseUrl => _baseUrl.useHttps(useHttps);
-
-  /// X岛CDN链接
-  Uri get cdnUrl => _cdnUrl.useHttps(useHttps);
-
-  /// X岛备用API链接
-  Uri get backupApiUrl => _backupApiUrl.useHttps(useHttps);
-
   /// X岛API链接
   Uri get apiUrl => useBackupApi ? backupApiUrl : baseUrl;
-
-  /// X岛公告链接
-  Uri get notice => _notice.useHttps(useHttps);
 
   /// CDN列表链接
   Uri get cdnList => apiUrl.replace(path: _cdnPath);
 
   /// 获取备用API链接的链接
-  Uri get backupApi => apiUrl.replace(path: _backupApiPath);
+  Uri get backupApiList => apiUrl.replace(path: _backupApiPath);
 
   /// 版块列表链接
   Uri get forumList => apiUrl.replace(path: 'Api/getForumList');
@@ -95,7 +66,7 @@ final class XdnmbUrls {
   Uri get timelineList => apiUrl.replace(path: 'Api/getTimelineList');
 
   /// 获取最新发的串的链接
-  Uri get getLastPost => apiUrl.replace(path: 'Api/getLastPost');
+  Uri get getLastPost => baseUrl.replace(path: 'Api/getLastPost');
 
   /// 发串链接
   Uri get postNewThread =>
@@ -127,10 +98,9 @@ final class XdnmbUrls {
 
   /// [XdnmbUrls]的内部构造器
   XdnmbUrls._internal(
-      {required Uri baseUrl, required Uri cdnUrl, required Uri backupApiUrl})
-      : _baseUrl = baseUrl,
-        _cdnUrl = cdnUrl,
-        _backupApiUrl = backupApiUrl;
+      {required this.baseUrl,
+      required this.cdnUrl,
+      required this.backupApiUrl});
 
   /// 构造[XdnmbUrls]，返回[XdnmbUrls]单例
   factory XdnmbUrls() => _urls;
@@ -231,37 +201,34 @@ final class XdnmbUrls {
       baseUrl.replace(path: 'Member/User/Cookie/delete/id/$cookieId.html');
 
   /// 是否X岛基础链接
-  bool isBaseUrl(Uri url) => url.host == _baseUrl.host;
+  bool isBaseUrl(Uri url) => url.host == baseUrl.host;
 
   /// 是否X岛备用API链接
-  bool isBackupApiUrl(Uri url) => url.host == _backupApiUrl.host;
+  bool isBackupApiUrl(Uri url) => url.host == backupApiUrl.host;
 
   /// 更新链接
   ///
-  /// [client]为http client，[useHttps]为是否使用HTTPS
-  static Future<XdnmbUrls> update(
-      {IOClient? client, bool useHttps = true}) async {
+  /// [client]为http client
+  static Future<XdnmbUrls> update([IOClient? client]) async {
     client = client ??
         IOClient(
             HttpClient()..connectionTimeout = Client.defaultConnectionTimeout);
 
     try {
-      final request = Request('GET', _originBaseUrl.useHttps(useHttps))
-        ..followRedirects = false;
+      final request = Request('GET', _originBaseUrl)..followRedirects = false;
       Response response = await Response.fromStream(await client.send(request));
       final baseUrl = response.isRedirect
           ? Uri.parse(response.headers[HttpHeaders.locationHeader] ??
               _originBaseUrl.toString())
           : _originBaseUrl;
-      final baseUrl_ = baseUrl.useHttps(useHttps);
 
-      response = await client.get(baseUrl_.replace(path: _cdnPath));
+      response = await client.get(baseUrl.replace(path: _cdnPath));
       dynamic decoded = json.decode(response.utf8Body);
       final cdnUrl = (decoded is List<dynamic> && decoded.isNotEmpty)
           ? Uri.parse(decoded[0]['url'] ?? _currentCdnUrl.toString())
           : _currentCdnUrl;
 
-      response = await client.get(baseUrl_.replace(path: _backupApiPath));
+      response = await client.get(baseUrl.replace(path: _backupApiPath));
       decoded = json.decode(response.utf8Body);
       final backupApiUrl = (decoded is List<dynamic> && decoded.isNotEmpty)
           ? Uri.parse(decoded[0] ?? _currentBackupApiUrl.toString())

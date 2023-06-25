@@ -4,9 +4,7 @@ import 'dart:math';
 import 'package:test/test.dart';
 import 'package:xdnmb_api/src/xdnmb.dart';
 
-const bool _useHttps = false;
-
-const bool _useBackupApi = true;
+const bool _useBackupApi = false;
 
 void main() async {
   group('XdnmbApi', () {
@@ -15,8 +13,7 @@ void main() async {
     final image = Platform.environment['XdnmbImage'];
 
     test('updateUrls() updates URLs', () async {
-      await xdnmb.updateUrls(_useHttps);
-      xdnmb.useHttps(_useHttps);
+      await xdnmb.updateUrls();
       xdnmb.useBackupApi(_useBackupApi);
     });
 
@@ -32,6 +29,12 @@ void main() async {
       final cdnList = await xdnmb.getCdnList();
 
       expect(cdnList[0].url, equals('https://image.nmb.best/'));
+    });
+
+    test('getBackupApiList() gets the backup API list', () async {
+      final backupApiList = await xdnmb.getBackupApiList();
+
+      expect(backupApiList.urls[0], equals('https://api.nmb.best'));
     });
 
     test('getForumList() gets the forum list', () async {

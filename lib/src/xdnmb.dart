@@ -127,6 +127,23 @@ class Cdn {
   int get hashCode => Object.hash(url, rate);
 }
 
+/// X岛备用API链接
+class BackupApiList {
+  /// 备用API链接列表
+  final List<String> urls;
+
+  /// 构造[BackupApiList]
+  const BackupApiList(this.urls);
+
+  /// 从JSON数据构造[BackupApiList]
+  factory BackupApiList._fromJosn(String data) {
+    final decoded = json.decode(data);
+    _handleJsonError(decoded);
+
+    return BackupApiList(List.castFrom(decoded));
+  }
+}
+
 /// 版块的基本类型，其他版块类型要实现[ForumBase]
 abstract interface class ForumBase {
   /// 版块ID
@@ -1965,13 +1982,7 @@ class XdnmbApi {
         xdnmbCookie = userHash != null ? XdnmbCookie(userHash) : null;
 
   /// 更新X岛链接
-  ///
-  /// [useHttps]为是否使用HTTPS
-  Future<void> updateUrls([bool useHttps = true]) =>
-      XdnmbUrls.update(client: _client, useHttps: useHttps);
-
-  /// 是否使用HTTPS，默认使用
-  void useHttps(bool useHttps) => XdnmbUrls().useHttps = useHttps;
+  Future<void> updateUrls() => XdnmbUrls.update(_client);
 
   /// 是否使用备用API链接，默认不使用
   void useBackupApi(bool useBackupApi) =>
@@ -1979,7 +1990,7 @@ class XdnmbApi {
 
   /// 获取X岛公告
   Future<Notice> getNotice() async {
-    final response = await _client.xGet(XdnmbUrls().notice);
+    final response = await _client.xGet(XdnmbUrls.notice);
 
     return Notice._fromJson(response.utf8Body);
   }
@@ -1992,6 +2003,16 @@ class XdnmbApi {
         await _client.xGet(XdnmbUrls().cdnList, cookie ?? xdnmbCookie?.cookie);
 
     return Cdn._fromJson(response.utf8Body);
+  }
+
+  /// 获取备用API链接列表
+  ///
+  /// [cookie]为饼干的cookie值
+  Future<BackupApiList> getBackupApiList({String? cookie}) async {
+    final response = await _client.xGet(
+        XdnmbUrls().backupApiList, cookie ?? xdnmbCookie?.cookie);
+
+    return BackupApiList._fromJosn(response.utf8Body);
   }
 
   /// 获取版块列表

@@ -15,7 +15,7 @@ void main() async {
 
     test('.xGet() performs a HTTP GET request', () async {
       final cookie = XdnmbCookie("cookies1");
-      const String url = 'https://httpbin.org/get?foo=bar&baz=qux';
+      const String url = 'https://$_host/get?foo=bar&baz=qux';
       final response = await client.xGet(Uri.parse(url), cookie.cookie);
       final Map<String, dynamic> body = json.decode(response.body);
 
@@ -32,7 +32,7 @@ void main() async {
 
     test('.xPostForm() performs a HTTP POST form request', () async {
       final cookie = XdnmbCookie("cookies2");
-      const String url = 'https://httpbin.org/post?foo=bar';
+      const String url = 'https://$_host/post?foo=bar';
       final form = {'baz': 'qux'};
       final response =
           await client.xPostForm(Uri.parse(url), form, cookie.cookie);
@@ -54,7 +54,7 @@ void main() async {
 
     test('.xPostMultipart() performs a HTTP POST multipart request', () async {
       final cookie = XdnmbCookie("cookies3");
-      const String url = 'https://httpbin.org/post?foo=bar';
+      const String url = 'https://$_host/post?foo=bar';
       final multipart = Multipart(Uri.parse(url))
         ..add('baz', 'qux')
         ..addBytes('image', utf8.encode('abcdefg'),
