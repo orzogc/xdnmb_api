@@ -234,8 +234,10 @@ final class XdnmbUrls {
           ? Uri.parse(decoded[0] ?? _currentBackupApiUrl.toString())
           : _currentBackupApiUrl;
 
-      _urls = XdnmbUrls._internal(
-          baseUrl: baseUrl, cdnUrl: cdnUrl, backupApiUrl: backupApiUrl);
+      final urls = XdnmbUrls._internal(
+          baseUrl: baseUrl, cdnUrl: cdnUrl, backupApiUrl: backupApiUrl)
+        ..useBackupApi = _urls.useBackupApi;
+      _urls = urls;
 
       return _urls;
     } catch (e) {
