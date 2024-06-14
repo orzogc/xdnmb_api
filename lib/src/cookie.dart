@@ -1,23 +1,23 @@
 part of 'xdnmb.dart';
 
-/// X岛饼干
+/// X 岛饼干
 class XdnmbCookie {
-  /// 饼干的userhash
+  /// 饼干的 userhash
   final String userHash;
 
   /// 饼干显示的名字
   final String? name;
 
-  /// 饼干ID
+  /// 饼干 ID
   final int? id;
 
-  /// 饼干的cookie值
+  /// 饼干的 cookie 值
   String get cookie => 'userhash=$userHash';
 
-  /// 构造[XdnmbCookie]
+  /// 构造 [XdnmbCookie]
   const XdnmbCookie(this.userHash, {this.name, this.id});
 
-  /// 从JSON数据构造[XdnmbCookie]
+  /// 从 JSON 数据构造 [XdnmbCookie]
   factory XdnmbCookie._fromJson(String data, {int? id}) {
     final Map<String, dynamic> decoded = json.decode(data);
 
@@ -47,10 +47,10 @@ class CookiesList {
   /// 帐号能够拥有的最大饼干数（饼干槽）
   final int totalCookiesNum;
 
-  /// 帐号饼干ID列表
+  /// 帐号饼干 ID 列表
   final List<int> cookiesIdList;
 
-  /// 构造[CookiesList]
+  /// 构造 [CookiesList]
   const CookiesList(
       {required this.canGetCookie,
       required this.currentCookiesNum,
@@ -58,8 +58,8 @@ class CookiesList {
       required this.cookiesIdList});
 }
 
-/// [Cookie]的扩展
+/// [Cookie] 的扩展
 extension CookieExtension on Cookie {
-  /// 将[Cookie]转化为cookie值
+  /// 将 [Cookie] 转化为 cookie 值
   String get toCookie => '$name=$value';
 }

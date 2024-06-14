@@ -6,57 +6,57 @@ import 'package:http/io_client.dart';
 
 import 'client.dart';
 
-/// X岛链接
+/// X 岛链接
 final class XdnmbUrls {
-  /// X岛域名
+  /// X 岛域名
   static const String xdnmbHost = 'www.nmbxd.com';
 
-  /// 获取CDN链接的接口的路径
+  /// 获取 CDN 链接的接口的路径
   static const String _cdnPath = 'Api/getCdnPath';
 
-  /// 获取备用API链接的接口的路径
+  /// 获取备用 API 链接的接口的路径
   static const String _backupApiPath = 'Api/backupUrl';
 
-  /// X岛初始链接
+  /// X 岛初始链接
   static final Uri _originBaseUrl = Uri.parse('https://$xdnmbHost/');
 
-  /// X岛现在的链接
+  /// X 岛现在的链接
   static final Uri _currentBaseUrl = Uri.parse('https://www.nmbxd1.com/');
 
-  /// X岛现在的CDN链接
+  /// X 岛现在的 CDN 链接
   static final Uri _currentCdnUrl = Uri.parse('https://image.nmb.best/');
 
-  /// X岛现在的备用API链接
+  /// X 岛现在的备用 API 链接
   static final Uri _currentBackupApiUrl = Uri.parse('https://api.nmb.best/');
 
-  /// X岛公告链接
+  /// X 岛公告链接
   static final Uri notice = Uri.parse('https://nmb.ovear.info/nmb-notice.json');
 
-  /// [XdnmbUrls]的单例
+  /// [XdnmbUrls] 的单例
   static XdnmbUrls _urls = XdnmbUrls._internal(
       baseUrl: _currentBaseUrl,
       cdnUrl: _currentCdnUrl,
       backupApiUrl: _currentBackupApiUrl);
 
-  /// X岛基础链接
+  /// X 岛基础链接
   final Uri baseUrl;
 
-  /// X岛CDN链接
+  /// X 岛 CDN 链接
   final Uri cdnUrl;
 
-  /// X岛备用API链接
+  /// X 岛备用 API 链接
   final Uri backupApiUrl;
 
-  /// 是否使用备用API链接，默认不使用
+  /// 是否使用备用 API 链接，默认不使用
   bool useBackupApi = false;
 
-  /// X岛API链接
+  /// X 岛 API 链接
   Uri get apiUrl => useBackupApi ? backupApiUrl : baseUrl;
 
-  /// CDN列表链接
+  /// CDN 列表链接
   Uri get cdnList => apiUrl.replace(path: _cdnPath);
 
-  /// 获取备用API链接的链接
+  /// 获取备用 API 链接的链接
   Uri get backupApiList => apiUrl.replace(path: _backupApiPath);
 
   /// 版块列表链接
@@ -96,119 +96,119 @@ final class XdnmbUrls {
   Uri get resetPassword =>
       baseUrl.replace(path: 'Member/User/Index/sendForgotPassword.html');
 
-  /// [XdnmbUrls]的内部构造器
+  /// [XdnmbUrls] 的内部构造器
   XdnmbUrls._internal(
       {required this.baseUrl,
       required this.cdnUrl,
       required this.backupApiUrl});
 
-  /// 构造[XdnmbUrls]，返回[XdnmbUrls]单例
+  /// 构造 [XdnmbUrls]，返回 [XdnmbUrls] 单例
   factory XdnmbUrls() => _urls;
 
   /// 版块链接
   ///
-  /// [forumId]为版块ID，[page]从1开始算起
+  /// [forumId] 为版块 ID，[page] 从 1 开始算起
   Uri forum(int forumId, {int page = 1}) => apiUrl.replace(
       path: 'Api/showf', queryParameters: {'id': '$forumId', 'page': '$page'});
 
   /// 网页版版块链接
   ///
-  /// [forumId]为版块ID，[page]从1开始算起
+  /// [forumId] 为版块 ID，[page] 从 1 开始算起
   Uri htmlForum(int forumId, {int page = 1}) => baseUrl.replace(
       path: 'Forum/showf',
       queryParameters: {'id': '$forumId', 'page': '$page'});
 
   /// 时间线链接
   ///
-  /// [timelineId]为时间线ID，[page]从1开始算起
+  /// [timelineId] 为时间线 ID，[page] 从 1 开始算起
   Uri timeline(int timelineId, {int page = 1}) => apiUrl.replace(
       path: 'Api/timeline',
       queryParameters: {'id': '$timelineId', 'page': '$page'});
 
   /// 串（帖子）链接
   ///
-  /// [mainPostId]为主串ID，[page]从1开始算起
+  /// [mainPostId] 为主串 ID，[page] 从 1 开始算起
   Uri thread(int mainPostId, {int page = 1}) => apiUrl.replace(
       path: 'Api/thread',
       queryParameters: {'id': '$mainPostId', 'page': '$page'});
 
   /// 串引用链接
   ///
-  /// [postId]为串ID
+  /// [postId] 为串 ID
   Uri reference(int postId) =>
       apiUrl.replace(path: 'Api/ref', queryParameters: {'id': '$postId'});
 
   /// 网页版串引用链接
   ///
-  /// [postId]为串ID
+  /// [postId] 为串 ID
   Uri htmlReference(int postId) => baseUrl
       .replace(path: 'Home/Forum/ref', queryParameters: {'id': '$postId'});
 
-  /// 只看Po主的串的链接
+  /// 只看 Po 主的串的链接
   ///
-  /// [mainPostId]为主串ID，[page]从1开始算起
+  /// [mainPostId] 为主串 ID，[page] 从 1 开始算起
   Uri onlyPoThread(int mainPostId, {int page = 1}) => apiUrl.replace(
       path: 'Api/po', queryParameters: {'id': '$mainPostId', 'page': '$page'});
 
   /// 订阅链接
   ///
-  /// [feedId]为订阅ID，[page]从1开始算起
+  /// [feedId] 为订阅 ID，[page] 从 1 开始算起
   Uri feed(String feedId, {int page = 1}) => apiUrl.replace(
       path: 'Api/feed', queryParameters: {'uuid': feedId, 'page': '$page'});
 
   /// 网页版订阅链接
   ///
-  /// [page]从1开始算起
+  /// [page] 从 1 开始算起
   Uri htmlFeed({int page = 1}) =>
       baseUrl.replace(path: 'Forum/feed/page/$page.html');
 
   /// 添加订阅的链接
   ///
-  /// [feedId]为订阅ID，[mainPostId]为主串ID
+  /// [feedId] 为订阅 ID，[mainPostId] 为主串 ID
   Uri addFeed(String feedId, int mainPostId) => apiUrl.replace(
       path: 'Api/addFeed',
       queryParameters: {'uuid': feedId, 'tid': '$mainPostId'});
 
   /// 网页版添加订阅的链接
   ///
-  /// [mainPostId]为主串ID
+  /// [mainPostId] 为主串 ID
   Uri addHtmlFeed(int mainPostId) =>
       baseUrl.replace(path: 'Home/Forum/addFeed/tid/$mainPostId.html');
 
   /// 删除订阅的链接
   ///
-  /// [feedId]为订阅ID，[mainPostId]为主串ID
+  /// [feedId] 为订阅 ID，[mainPostId] 为主串 ID
   Uri deleteFeed(String feedId, int mainPostId) => apiUrl.replace(
       path: 'Api/delFeed',
       queryParameters: {'uuid': feedId, 'tid': '$mainPostId'});
 
   /// 网页版删除订阅的链接
   ///
-  /// [mainPostId]为主串ID
+  /// [mainPostId] 为主串 ID
   Uri deleteHtmlFeed(int mainPostId) =>
       baseUrl.replace(path: 'Home/Forum/delFeed/tid/$mainPostId.html');
 
   /// 获取饼干的链接
   ///
-  /// [cookieId]为饼干ID
+  /// [cookieId] 为饼干 ID
   Uri getCookie(int cookieId) =>
       baseUrl.replace(path: 'Member/User/Cookie/export/id/$cookieId.html');
 
   /// 删除饼干的链接
   ///
-  /// [cookieId]为饼干ID
+  /// [cookieId] 为饼干 ID
   Uri deleteCookie(int cookieId) =>
       baseUrl.replace(path: 'Member/User/Cookie/delete/id/$cookieId.html');
 
-  /// 是否X岛基础链接
+  /// 是否 X 岛基础链接
   bool isBaseUrl(Uri url) => url.host == baseUrl.host;
 
-  /// 是否X岛备用API链接
+  /// 是否 X 岛备用 API 链接
   bool isBackupApiUrl(Uri url) => url.host == backupApiUrl.host;
 
   /// 更新链接
   ///
-  /// [client]为http client
+  /// [client] 为 http client
   static Future<XdnmbUrls> update([IOClient? client]) async {
     client = client ??
         IOClient(

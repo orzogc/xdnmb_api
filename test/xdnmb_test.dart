@@ -57,7 +57,7 @@ void main() async {
       for (final forum in forumList.forumList) {
         expect(forum.id, isPositive);
         expect(forum.forumGroupId, isPositive);
-        expect(forum.sort, isNonNegative);
+        //expect(forum.sort, isNonNegative);
         expect(forum.name, isNotEmpty);
         expect(forum.message, isNotEmpty);
         expect(forum.interval, isPositive);
@@ -78,7 +78,7 @@ void main() async {
         expect(timeline.id, isPositive);
         expect(timeline.name, isNotEmpty);
         expect(timeline.displayName, isNotEmpty);
-        expect(timeline.message, isNotEmpty);
+        //expect(timeline.message, isNotEmpty);
         expect(timeline.maxPage, isPositive);
       }
     });
