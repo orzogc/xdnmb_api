@@ -3,7 +3,7 @@ description: API for nmbxd.com.
 version: 0.1.0
 
 environment:
-  sdk: '>=3.0.5 <4.0.0'
+  sdk: '>=3.4.1 <4.0.0'
 
 dependencies:
   html: ^0.15.4
