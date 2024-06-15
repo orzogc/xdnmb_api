@@ -1911,14 +1911,16 @@ class Emoticon {
 class ReportReason {
   /// X 岛匿名版官方的举报理由
   static const List<ReportReason> list = [
+    // autocorrect: false
     ReportReason(reason: '黄赌毒', text: '黄赌毒'),
     ReportReason(reason: '政治敏感', text: '政治敏感'),
     ReportReason(reason: '谣言欺诈', text: '谣言欺诈'),
-    ReportReason(reason: '广告 q 群', text: '广告 q 群'),
+    ReportReason(reason: '广告q群', text: '广告q群'),
     ReportReason(reason: '引战辱骂', text: '引战辱骂'),
     ReportReason(reason: '串版', text: '串版'),
     ReportReason(reason: '错字自删', text: '错字自删'),
     ReportReason(reason: '错饼自删', text: '错饼自删'),
+    // autocorrect: true
   ];
 
   /// 举报理由
